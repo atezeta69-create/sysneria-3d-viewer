@@ -392,7 +392,7 @@
       shadow-intensity="0.8"
       exposure="1.0"
       tone-mapping="neutral"
-      skybox-image="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr"
+      skybox-image=""
       min-camera-orbit="auto 0deg 0m"
       max-camera-orbit="360deg 89deg 20m"
       camera-target="0m 0m 0m"
@@ -437,6 +437,7 @@
   <div id="selector">
     <button class="scene-btn active" data-model="assets/playa.glb"
             data-title="Playa Palmeras" data-desc="Palmeras · arena · océano · nubes"
+            data-skybox="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr"
             data-size="1.6 MB">
       <span class="icon">🏖️</span>
       <span class="label">Playa</span>
@@ -445,6 +446,7 @@
 
     <button class="scene-btn" data-model="assets/bosque_cartoon.glb"
             data-title="Bosque Cartoon" data-desc="4 robles · agave · suelo de hierba"
+            data-skybox="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr"
             data-size="41 MB">
       <span class="icon">🌳</span>
       <span class="label">Bosque</span>
@@ -453,6 +455,7 @@
 
     <button class="scene-btn" data-model="assets/mesa_carpintero.glb"
             data-title="Mesa Carpintero" data-desc="Mesa de trabajo de madera clásica"
+            data-skybox="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/brown_photostudio_02_2k.hdr"
             data-size="2.5 MB">
       <span class="icon">🪵</span>
       <span class="label">Mesa</span>
@@ -485,6 +488,9 @@ if (window.location.protocol === 'file:') {
   }, 2000);
 } else {
   // Solo en servidor: monitorizar carga real
+  // Iniciar skybox de la escena inicial (playa)
+  viewer.skyboxImage = "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr";
+  
   viewer.addEventListener('load', () => {
     setTimeout(() => loading.classList.add('hidden'), 300);
   });
@@ -535,6 +541,12 @@ buttons.forEach(btn => {
     // Info
     sceneTitle.textContent = title;
     sceneDesc.textContent = desc;
+
+    // Cambiar skybox (fondo HDRI)
+    const skybox = btn.dataset.skybox;
+    if (skybox) {
+      viewer.skyboxImage = skybox;
+    }
 
     // Mostrar loading
     loading.classList.remove('hidden');
