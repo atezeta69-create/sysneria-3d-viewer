@@ -447,6 +447,7 @@
     <button class="scene-btn" data-model="assets/bosque_cartoon.glb"
             data-title="Bosque Cartoon" data-desc="4 robles · agave · suelo de hierba"
             data-skybox="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr"
+            data-max-radius="5m"
             data-size="41 MB">
       <span class="icon">🌳</span>
       <span class="label">Bosque</span>
@@ -547,6 +548,10 @@ buttons.forEach(btn => {
     if (skybox) {
       viewer.skyboxImage = skybox;
     }
+
+    // Ajustar zoom máximo según la escena
+    const maxRadius = btn.dataset.maxRadius || '20m';
+    viewer.maxCameraOrbit = `360deg 89deg ${maxRadius}`;
 
     // Mostrar loading
     loading.classList.remove('hidden');
