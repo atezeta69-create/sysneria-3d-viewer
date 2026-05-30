@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SysNerIA — Visor 3D</title>
+
+<!-- model-viewer CDN -->
+<script type="importmap">
+{
+  "imports": {
+    "@google/model-viewer": "https://esm.sh/@google/model-viewer@4.1.0"
+  }
+}
+</script>
+
+<style>
+  /* ===== RESET ===== */
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0f;
+    color: #e0dcd0;
+    height: 100dvh;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ===== LAYOUT ===== */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #b8a88a, #d4c5a9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header .badge {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.07);
+    color: #8a8478;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ===== MODEL VIEWER ===== */
+  #viewer-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #08080c;
+  }
+
+  model-viewer {
+    width: 100%;
+    height: 100%;
+    --progress-bar-color: #d4c5a9;
+    --progress-bar-height: 2px;
+  }
+
+  /* ===== LOADING OVERLAY ===== */
+  #loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #08080c;
+    z-index: 5;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+
+  #loading.hidden {
+    opacity: 0;
+  }
+
+  #loading .spinner {
+    width: 32px;
+    height: 32px;
+    border: 2px solid rgba(212,197,169,0.15);
+    border-top-color: #d4c5a9;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #loading p {
+    font-size: 12px;
+    color: #6a6458;
+    letter-spacing: 1px;
+  }
+
+  /* ===== CORS WARNING ===== */
+  #cors-warning {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    display: none;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(30,20,10,0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212,180,100,0.2);
+    border-radius: 16px;
+    padding: 18px 20px;
+    max-width: 320px;
+    width: 85%;
+    color: #e0dcd0;
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  }
+
+  #cors-warning .icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  #cors-warning strong {
+    display: block;
+    color: #d4c5a9;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  #cors-warning p {
+    color: #8a8478;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  #cors-warning code {
+    display: inline-block;
+    background: rgba(255,255,255,0.06);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #b8a88a;
+  }
+
+  #cors-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #5a5448;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+  }
+
+  /* ===== SCENE INFO OVERLAY ===== */
+  #scene-info {
+    position: absolute;
+    bottom: 80px;
+    left: 18px;
+    right: 18px;
+    text-align: center;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  #scene-info h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+    margin-bottom: 4px;
+  }
+
+  #scene-info p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+  }
+
+  /* ===== BOTTOM BAR (SELECTOR) ===== */
+  #selector {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #selector::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scene-btn {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 8px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    color: #8a8478;
+    font-size: 11px;
+    font-weight: 500;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .scene-btn:active {
+    transform: scale(0.95);
+  }
+
+  .scene-btn.active {
+    background: rgba(212,197,169,0.12);
+    border-color: rgba(212,197,169,0.3);
+    color: #d4c5a9;
+  }
+
+  .scene-btn .icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .scene-btn .label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .scene-btn .size-badge {
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    color: #5a5448;
+  }
+
+  .scene-btn.active .size-badge {
+    background: rgba(212,197,169,0.15);
+    color: #a09478;
+  }
+
+  /* ===== CONTROLS HINT ===== */
+  #controls-hint {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+    text-align: right;
+    line-height: 1.6;
+    pointer-events: none;
+    z-index: 2;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+  }
+
+  /* ===== AR MODE (solo mobile) ===== */
+  #ar-button {
+    position: absolute;
+    bottom: 90px;
+    right: 14px;
+    z-index: 3;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+
+  #ar-button:active {
+    background: rgba(255,255,255,0.2);
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (min-width: 768px) {
+    #selector {
+      padding: 16px 24px;
+      gap: 12px;
+      justify-content: center;
+    }
+    .scene-btn {
+      max-width: 160px;
+      padding: 14px 16px;
+    }
+    .scene-btn .icon {
+      font-size: 28px;
+    }
+    #scene-info h2 {
+      font-size: 26px;
+    }
+    #controls-hint {
+      font-size: 11px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- HEADER -->
+  <header>
+    <h1>◈ SysNerIA · 3D</h1>
+    <span class="badge">beta</span>
+  </header>
+
+  <!-- VIEWER -->
+  <div id="viewer-container">
+    <model-viewer
+      id="viewer"
+      src="assets/playa.glb"
+      alt="Escena 3D"
+      camera-controls
+      auto-rotate
+      rotation-per-second="30deg"
+      shadow-intensity="0.8"
+      exposure="1.0"
+      tone-mapping="neutral"
+      skybox-image="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr"
+      min-camera-orbit="auto 70deg 0m"
+      max-camera-orbit="360deg 90deg 20m"
+      camera-target="0m 0m 0m"
+      interaction-prompt="none"
+      loading="eager"
+      reveal="auto"
+    ></model-viewer>
+
+    <!-- LOADING -->
+    <div id="loading" class="">
+      <div class="spinner"></div>
+      <p id="loading-text">CARGANDO</p>
+    </div>
+
+    <!-- CORS WARNING (visible solo si abierto como file://) -->
+    <div id="cors-warning">
+      <span class="icon">🔒</span>
+      <div>
+        <strong>Conexión local requerida</strong>
+        <p>Abre con servidor local para ver los modelos 3D.</p>
+      </div>
+      <button id="cors-close">✕</button>
+    </div>
+
+    <!-- SCENE INFO -->
+    <div id="scene-info">
+      <h2 id="scene-title">Playa Palmeras</h2>
+      <p id="scene-desc">Palmeras · arena · océano · nubes</p>
+    </div>
+
+    <!-- CONTROLS HINT -->
+    <div id="controls-hint">🖱 girar · desplazar · zoom<br>auto-rotación</div>
+
+    <!-- AR BUTTON -->
+    <button id="ar-button" title="Ver en RA">📱</button>
+  </div>
+
+  <!-- SELECTOR -->
+  <div id="selector">
+    <button class="scene-btn active" data-model="assets/playa.glb"
+            data-title="Playa Palmeras" data-desc="Palmeras · arena · océano · nubes"
+            data-size="1.6 MB">
+      <span class="icon">🏖️</span>
+      <span class="label">Playa</span>
+      <span class="size-badge">1.6 MB</span>
+    </button>
+
+    <button class="scene-btn" data-model="assets/bosque_cartoon.glb"
+            data-title="Bosque Cartoon" data-desc="4 robles · agave · suelo de hierba"
+            data-size="41 MB">
+      <span class="icon">🌳</span>
+      <span class="label">Bosque</span>
+      <span class="size-badge">41 MB</span>
+    </button>
+
+    <button class="scene-btn" data-model="assets/mesa_carpintero.glb"
+            data-title="Mesa Carpintero" data-desc="Mesa de trabajo de madera clásica"
+            data-size="2.5 MB">
+      <span class="icon">🪵</span>
+      <span class="label">Mesa</span>
+      <span class="size-badge">2.5 MB</span>
+    </button>
+  </div>
+</div>
+
+<script type="module">
+import '@google/model-viewer';
+
+const viewer = document.getElementById('viewer');
+const loading = document.getElementById('loading');
+const loadingText = document.getElementById('loading-text');
+const sceneTitle = document.getElementById('scene-title');
+const sceneDesc = document.getElementById('scene-desc');
+const arButton = document.getElementById('ar-button');
+const buttons = document.querySelectorAll('.scene-btn');
+const corsWarning = document.getElementById('cors-warning');
+const corsClose = document.getElementById('cors-close');
+
+// --- DETECTAR file:// ---
+if (window.location.protocol === 'file:') {
+  corsWarning.style.display = 'flex';
+  loadingText.textContent = 'MODO ARCHIVO LOCAL';
+  // Mostrar carga pero ocultar tras 2s con mensaje
+  setTimeout(() => {
+    loading.classList.add('hidden');
+  }, 2000);
+} else {
+  // Solo en servidor: monitorizar carga real
+  viewer.addEventListener('load', () => {
+    setTimeout(() => loading.classList.add('hidden'), 300);
+  });
+
+  // Timeout de seguridad: ocultar loading tras 30s
+  setTimeout(() => {
+    loading.classList.add('hidden');
+  }, 30000);
+}
+
+// --- CERRAR CORS WARNING ---
+corsClose.addEventListener('click', () => {
+  corsWarning.style.display = 'none';
+});
+
+// --- SOPORTE AR ---
+if (viewer.canActivateAR) {
+  arButton.style.display = 'flex';
+  arButton.addEventListener('click', () => viewer.activateAR());
+}
+
+// --- CAMBIAR ESCENA ---
+let switching = false;
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', async () => {
+    if (switching) return;
+    switching = true;
+
+    // UI
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const model = btn.dataset.model;
+    const title = btn.dataset.title;
+    const desc = btn.dataset.desc;
+
+    // Info
+    sceneTitle.textContent = title;
+    sceneDesc.textContent = desc;
+
+    // Mostrar loading
+    loading.classList.remove('hidden');
+
+    // Cambiar modelo
+    viewer.src = model;
+
+    // Esperar a que cargue
+    await new Promise(resolve => {
+      viewer.addEventListener('load', resolve, { once: true });
+      // Timeout por si falla
+      setTimeout(resolve, 15000);
+    });
+
+    setTimeout(() => loading.classList.add('hidden'), 300);
+    switching = false;
+  });
+});
+
+// --- PREVENIR SCROLL HORIZONTAL ACCIDENTAL ---
+document.addEventListener('touchmove', (e) => {
+  const selector = document.getElementById('selector');
+  if (selector.contains(e.target)) return;
+  e.preventDefault();
+}, { passive: false });
+
+console.log('✅ SysNerIA 3D Viewer loaded');
+console.log('📦 Modelos disponibles:');
+console.log('  🌳 Bosque Cartoon  — 41 MB');
+console.log('  🪵 Mesa Carpintero — 2.5 MB');
+console.log('  🏖️ Playa Palmeras  — 1.6 MB');
+</script>
+</body>
+</html>
