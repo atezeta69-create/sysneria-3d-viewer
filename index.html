@@ -318,6 +318,36 @@
     background: rgba(255,255,255,0.2);
   }
 
+  /* ===== AUTO-ROTATE TOGGLE ===== */
+  #rotate-toggle {
+    position: absolute;
+    bottom: 140px;
+    right: 14px;
+    z-index: 3;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+
+  #rotate-toggle:active {
+    background: rgba(255,255,255,0.2);
+  }
+
+  #rotate-toggle.paused {
+    background: rgba(212,180,100,0.2);
+    border-color: rgba(212,180,100,0.3);
+  }
+
   /* ===== RESPONSIVE ===== */
   @media (min-width: 768px) {
     #selector {
@@ -364,7 +394,7 @@
       tone-mapping="neutral"
       skybox-image="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr"
       min-camera-orbit="auto 0deg 0m"
-      max-camera-orbit="360deg 60deg 20m"
+      max-camera-orbit="360deg 89deg 20m"
       camera-target="0m 0m 0m"
       interaction-prompt="none"
       loading="eager"
@@ -394,10 +424,13 @@
     </div>
 
     <!-- CONTROLS HINT -->
-    <div id="controls-hint">🖱 girar · desplazar · zoom<br>auto-rotación</div>
+    <div id="controls-hint">🖱 girar · desplazar · zoom<br>⏸ parar rotación</div>
 
     <!-- AR BUTTON -->
     <button id="ar-button" title="Ver en RA">📱</button>
+
+    <!-- AUTO-ROTATE TOGGLE -->
+    <button id="rotate-toggle" title="Parar/Reanudar rotación">⏸</button>
   </div>
 
   <!-- SELECTOR -->
@@ -440,6 +473,7 @@ const arButton = document.getElementById('ar-button');
 const buttons = document.querySelectorAll('.scene-btn');
 const corsWarning = document.getElementById('cors-warning');
 const corsClose = document.getElementById('cors-close');
+const rotateToggle = document.getElementById('rotate-toggle');
 
 // --- DETECTAR file:// ---
 if (window.location.protocol === 'file:') {
@@ -460,6 +494,16 @@ if (window.location.protocol === 'file:') {
     loading.classList.add('hidden');
   }, 30000);
 }
+
+// --- AUTO-ROTATE TOGGLE ---
+let isRotating = true;
+rotateToggle.addEventListener('click', () => {
+  isRotating = !isRotating;
+  viewer.autoRotate = isRotating;
+  rotateToggle.textContent = isRotating ? '⏸' : '▶';
+  rotateToggle.classList.toggle('paused', !isRotating);
+  rotateToggle.title = isRotating ? 'Parar rotación' : 'Reanudar rotación';
+});
 
 // --- CERRAR CORS WARNING ---
 corsClose.addEventListener('click', () => {
