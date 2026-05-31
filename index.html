@@ -184,12 +184,14 @@
   /* ===== SCENE INFO OVERLAY ===== */
   #scene-info {
     position: absolute;
-    bottom: 80px;
-    left: 18px;
-    right: 18px;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
     text-align: center;
     pointer-events: none;
     z-index: 3;
+    max-width: 60%;
+    width: auto;
   }
 
   #scene-info h2 {
@@ -204,79 +206,6 @@
     font-size: 12px;
     color: rgba(255,255,255,0.6);
     text-shadow: 0 2px 12px rgba(0,0,0,0.8);
-  }
-
-  /* ===== BOTTOM BAR (SELECTOR) ===== */
-  #selector {
-    display: flex;
-    gap: 8px;
-    padding: 12px 16px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
-    background: rgba(10,10,15,0.95);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255,255,255,0.06);
-    flex-shrink: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  #selector::-webkit-scrollbar {
-    display: none;
-  }
-
-  .scene-btn {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 8px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1.5px solid transparent;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    color: #8a8478;
-    font-size: 11px;
-    font-weight: 500;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  .scene-btn:active {
-    transform: scale(0.95);
-  }
-
-  .scene-btn.active {
-    background: rgba(212,197,169,0.12);
-    border-color: rgba(212,197,169,0.3);
-    color: #d4c5a9;
-  }
-
-  .scene-btn .icon {
-    font-size: 22px;
-    line-height: 1;
-  }
-
-  .scene-btn .label {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-
-  .scene-btn .size-badge {
-    font-size: 9px;
-    padding: 1px 6px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.06);
-    color: #5a5448;
-  }
-
-  .scene-btn.active .size-badge {
-    background: rgba(212,197,169,0.15);
-    color: #a09478;
   }
 
   /* ===== CONTROLS HINT ===== */
@@ -348,20 +277,203 @@
     border-color: rgba(212,180,100,0.3);
   }
 
+  /* ===== THREE CONTEXT PANELS (Virtual Tour Style) ===== */
+
+  /* Panel base */
+  .ctx-panel {
+    position: absolute;
+    z-index: 3;
+    background: rgba(10,10,15,0.78);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 8px 6px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    pointer-events: auto;
+  }
+
+  .ctx-panel .panel-header {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #4a4438;
+    text-align: center;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  /* Left panel — vertical tools */
+  .ctx-panel.left {
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    display: flex;
+    gap: 2px;
+    min-width: 44px;
+  }
+
+  /* Right panel — vertical settings */
+  .ctx-panel.right {
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    display: flex;
+    gap: 2px;
+    min-width: 44px;
+  }
+
+  /* Center panel — horizontal camera controls */
+  .ctx-panel.center {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 90px;
+    flex-direction: row;
+    display: flex;
+    gap: 2px;
+    padding: 6px 10px;
+  }
+
+  .ctx-panel.center .panel-header {
+    display: none;
+  }
+
+  /* Panel items */
+  .ctx-item {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: #5a5448;
+    font-size: 15px;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    opacity: 0.45;
+    position: relative;
+    touch-action: manipulation;
+  }
+
+  .ctx-item:hover {
+    background: rgba(255,255,255,0.04);
+    opacity: 0.7;
+  }
+
+  .ctx-item.active {
+    background: rgba(212,197,169,0.12);
+    border: 1px solid rgba(212,197,169,0.2);
+    color: #d4c5a9;
+    opacity: 1;
+  }
+
+  .ctx-item .tooltip {
+    display: none;
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: #b8a88a;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .ctx-panel.right .ctx-item .tooltip {
+    left: auto;
+    right: calc(100% + 8px);
+  }
+
+  .ctx-item:hover .tooltip {
+    display: block;
+  }
+
+  /* Active items are clickable */
+  .ctx-item.clickable {
+    cursor: pointer;
+    opacity: 0.7;
+  }
+
+  .ctx-item.clickable:hover {
+    opacity: 1;
+  }
+
+  /* Separator in panels */
+  .ctx-sep {
+    width: 24px;
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    margin: 3px auto;
+  }
+
+  .ctx-panel.center .ctx-sep {
+    width: 1px;
+    height: 24px;
+    margin: auto 3px;
+  }
+
+  /* ===== NAV SELECT (DROPDOWNS) ===== */
+  #header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    color: #c8b898;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 28px 5px 10px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a7a5a'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    min-width: 100px;
+  }
+
+  .nav-select:hover {
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  .nav-select:focus {
+    border-color: rgba(180,160,120,0.4);
+  }
+
+  .nav-select option {
+    background: #14141a;
+    color: #c8b898;
+  }
+
+  @media (max-width: 500px) {
+    .nav-select {
+      font-size: 11px;
+      padding: 4px 24px 4px 8px;
+      min-width: 80px;
+    }
+  }
+
+  /* Hide mesa-select when not in Estudio scene (handled by JS) */
+
   /* ===== RESPONSIVE ===== */
   @media (min-width: 768px) {
-    #selector {
-      padding: 16px 24px;
-      gap: 12px;
-      justify-content: center;
-    }
-    .scene-btn {
-      max-width: 160px;
-      padding: 14px 16px;
-    }
-    .scene-btn .icon {
-      font-size: 28px;
-    }
     #scene-info h2 {
       font-size: 26px;
     }
@@ -376,8 +488,20 @@
 <div id="app">
   <!-- HEADER -->
   <header>
-    <h1>◈ SysNerIA · 3D</h1>
-    <span class="badge">beta</span>
+    <h1>◈ SysNerIA</h1>
+    <div id="header-controls">
+      <select id="scene-select" class="nav-select">
+        <option value="playa">🏖️ Playa</option>
+        <option value="bosque">🌳 Bosque</option>
+        <option value="mesa">🎨 Estudio</option>
+        <option value="taller">🛠️ Taller</option>
+      </select>
+      <select id="mesa-select" class="nav-select">
+        <option value="roble">🪵 V1 · Roble</option>
+        <option value="blanca_bosque">🌲 V2 · Bosque</option>
+        <option value="blanca_estudio">🎨 V3 · Estudio</option>
+      </select>
+    </div>
   </header>
 
   <!-- VIEWER -->
@@ -431,47 +555,44 @@
 
     <!-- AUTO-ROTATE TOGGLE -->
     <button id="rotate-toggle" title="Parar/Reanudar rotación">⏸</button>
+
+    <!-- THREE CONTEXT PANELS (virtual tour style) -->
+
+    <!-- LEFT PANEL — HERRAMIENTAS -->
+    <div class="ctx-panel left">
+      <div class="panel-header">Herramientas</div>
+      <button class="ctx-item" title="Martillo"><span>🔨</span><span class="tooltip">Martillo</span></button>
+      <button class="ctx-item" title="Llave inglesa"><span>🔧</span><span class="tooltip">Llave inglesa</span></button>
+      <button class="ctx-item" title="Cinta métrica"><span>📏</span><span class="tooltip">Cinta métrica</span></button>
+      <button class="ctx-item" title="Lápiz"><span>✏️</span><span class="tooltip">Lápiz</span></button>
+      <div class="ctx-sep"></div>
+      <button class="ctx-item" title="Pintura"><span>🎨</span><span class="tooltip">Pintura</span></button>
+      <button class="ctx-item" title="Nivel"><span>📐</span><span class="tooltip">Nivel</span></button>
+      <button class="ctx-item" title="Caja herramientas"><span>🧰</span><span class="tooltip">Caja herramientas</span></button>
+    </div>
+
+    <!-- CENTER PANEL — VISTA -->
+    <div class="ctx-panel center">
+      <button class="ctx-item clickable" data-action="human-view" title="Vista humana"><span>👁️</span><span class="tooltip">Vista humana</span></button>
+      <button class="ctx-item clickable" data-action="view-switch" title="Switch vista"><span>🔄</span><span class="tooltip">Switch vista</span></button>
+      <div class="ctx-sep"></div>
+      <button class="ctx-item" title="Enfoque automático"><span>🎯</span><span class="tooltip">Enfoque</span></button>
+      <button class="ctx-item" title="Ver cuadrícula"><span>🔲</span><span class="tooltip">Cuadrícula</span></button>
+    </div>
+
+    <!-- RIGHT PANEL — AJUSTES -->
+    <div class="ctx-panel right">
+      <div class="panel-header">Ajustes</div>
+      <button class="ctx-item" title="Ajustes generales"><span>⚙️</span><span class="tooltip">Ajustes</span></button>
+      <button class="ctx-item" title="Iluminación"><span>💡</span><span class="tooltip">Iluminación</span></button>
+      <button class="ctx-item" title="Materiales"><span>🎨</span><span class="tooltip">Materiales</span></button>
+      <button class="ctx-item" title="Fondo / Entorno"><span>🖼️</span><span class="tooltip">Fondo</span></button>
+      <div class="ctx-sep"></div>
+      <button class="ctx-item" title="Info escena"><span>📋</span><span class="tooltip">Info</span></button>
+      <button class="ctx-item" title="Capturar pantalla"><span>📷</span><span class="tooltip">Capturar</span></button>
+    </div>
   </div>
 
-  <!-- SELECTOR -->
-  <div id="selector">
-    <button class="scene-btn active" data-model="assets/playa.glb"
-            data-title="Playa Palmeras" data-desc="Palmeras · arena · océano · nubes"
-            data-skybox="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr"
-            data-size="1.6 MB">
-      <span class="icon">🏖️</span>
-      <span class="label">Playa</span>
-      <span class="size-badge">1.6 MB</span>
-    </button>
-
-    <button class="scene-btn" data-model="assets/bosque_cartoon.glb"
-            data-title="Bosque Cartoon" data-desc="4 robles · agave · suelo de hierba"
-            data-skybox="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr"
-            data-max-radius="5m"
-            data-size="41 MB">
-      <span class="icon">🌳</span>
-      <span class="label">Bosque</span>
-      <span class="size-badge">41 MB</span>
-    </button>
-
-    <button class="scene-btn" data-model="assets/mesa_carpintero.glb"
-            data-title="Mesa Carpintero" data-desc="Mesa de trabajo de madera clásica"
-            data-skybox="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/monochrome_studio_03_2k.hdr"
-            data-size="2.5 MB">
-      <span class="icon">🪵</span>
-      <span class="label">Mesa</span>
-      <span class="size-badge">2.5 MB</span>
-    </button>
-
-    <button class="scene-btn" data-model="assets/taller_carpintero.glb"
-            data-title="Taller Carpintero" data-desc="Taller completo · ventana · estanterías · herramientas"
-            data-skybox="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/brown_photostudio_02_2k.hdr"
-            data-size="16 MB">
-      <span class="icon">🪚</span>
-      <span class="label">Taller</span>
-      <span class="size-badge">16 MB</span>
-    </button>
-  </div>
 </div>
 
 <script type="module">
@@ -483,7 +604,6 @@ const loadingText = document.getElementById('loading-text');
 const sceneTitle = document.getElementById('scene-title');
 const sceneDesc = document.getElementById('scene-desc');
 const arButton = document.getElementById('ar-button');
-const buttons = document.querySelectorAll('.scene-btn');
 const corsWarning = document.getElementById('cors-warning');
 const corsClose = document.getElementById('cors-close');
 const rotateToggle = document.getElementById('rotate-toggle');
@@ -521,6 +641,47 @@ rotateToggle.addEventListener('click', () => {
   rotateToggle.title = isRotating ? 'Parar rotación' : 'Reanudar rotación';
 });
 
+// --- CAMERA CONTROLS (Context Panels) ---
+
+// View state
+let viewState = 'orbit'; // 'orbit' | 'front'
+
+// Human view: camera at eye level (~1.7m), looking at scene center
+function setHumanView() {
+  viewer.cameraOrbit = '0deg 78deg 5m';
+  viewer.autoRotate = false;
+  isRotating = false;
+  rotateToggle.textContent = '▶';
+  rotateToggle.classList.add('paused');
+  rotateToggle.title = 'Reanudar rotación';
+  viewState = 'front';
+}
+
+// View switch: toggle front/orbit
+function toggleView() {
+  if (viewState === 'orbit') {
+    setHumanView();
+  } else {
+    // Back to orbit
+    viewer.cameraOrbit = '45deg 70deg 8m';
+    viewer.autoRotate = true;
+    isRotating = true;
+    rotateToggle.textContent = '⏸';
+    rotateToggle.classList.remove('paused');
+    rotateToggle.title = 'Parar rotación';
+    viewState = 'orbit';
+  }
+}
+
+// Click handlers on clickable items
+document.querySelectorAll('.ctx-item.clickable').forEach(item => {
+  item.addEventListener('click', () => {
+    const action = item.dataset.action;
+    if (action === 'human-view') setHumanView();
+    else if (action === 'view-switch') toggleView();
+  });
+});
+
 // --- CERRAR CORS WARNING ---
 corsClose.addEventListener('click', () => {
   corsWarning.style.display = 'none';
@@ -532,67 +693,64 @@ if (viewer.canActivateAR) {
   arButton.addEventListener('click', () => viewer.activateAR());
 }
 
-// --- CAMBIAR ESCENA ---
-let switching = false;
+// --- CONFIG DE ESCENAS ---
+const sceneData = {
+  playa: { model: 'assets/playa.glb', title: 'Playa Palmeras', desc: 'Palmeras · arena · océano · nubes', skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr', maxRadius: '20m' },
+  bosque: { model: 'assets/bosque_cartoon.glb', title: 'Bosque Cartoon', desc: '4 robles · agave · suelo de hierba', skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr', maxRadius: '5m' },
+  mesa: { model: 'assets/mesa_carpintero.glb', title: 'Estudio', desc: 'Sala blanca · iluminación de estudio', skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/monochrome_studio_03_2k.hdr', maxRadius: '20m' },
+  taller: { model: 'assets/taller_carpintero.glb', title: 'Taller Carpintero', desc: 'Taller completo · ventana · estanterías · herramientas', skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/brown_photostudio_02_2k.hdr', maxRadius: '20m' }
+};
 
-buttons.forEach(btn => {
-  btn.addEventListener('click', async () => {
-    if (switching) return;
-    switching = true;
+const sceneSelect = document.getElementById('scene-select');
+const mesaSelect = document.getElementById('mesa-select');
+let currentTable = 'roble';
 
-    // UI
-    buttons.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+// --- MOSTRAR/OCULTAR SELECTOR DE MESA ---
+function updateMesaVisibility(scene) {
+  mesaSelect.style.display = (scene === 'mesa') ? '' : 'none';
+}
 
-    const model = btn.dataset.model;
-    const title = btn.dataset.title;
-    const desc = btn.dataset.desc;
+// --- CARGAR MODELO ---
+async function loadScene(scene, table) {
+  const data = sceneData[scene];
+  sceneTitle.textContent = data.title;
+  sceneDesc.textContent = data.desc;
+  if (data.skybox) viewer.skyboxImage = data.skybox;
+  viewer.maxCameraOrbit = `360deg 89deg ${data.maxRadius}`;
 
-    // Info
-    sceneTitle.textContent = title;
-    sceneDesc.textContent = desc;
+  let src;
+  if (scene === 'mesa') {
+    src = `assets/combinaciones/${scene}_${table}.glb`;
+  } else {
+    src = data.model;
+  }
 
-    // Cambiar skybox (fondo HDRI)
-    const skybox = btn.dataset.skybox;
-    if (skybox) {
-      viewer.skyboxImage = skybox;
-    }
+  loading.classList.remove('hidden');
+  viewer.src = src;
+  console.log(`Cargando: ${src}`);
 
-    // Ajustar zoom máximo según la escena
-    const maxRadius = btn.dataset.maxRadius || '20m';
-    viewer.maxCameraOrbit = `360deg 89deg ${maxRadius}`;
-
-    // Mostrar loading
-    loading.classList.remove('hidden');
-
-    // Cambiar modelo
-    viewer.src = model;
-
-    // Esperar a que cargue
-    await new Promise(resolve => {
-      viewer.addEventListener('load', resolve, { once: true });
-      // Timeout por si falla
-      setTimeout(resolve, 15000);
-    });
-
-    setTimeout(() => loading.classList.add('hidden'), 300);
-    switching = false;
+  await new Promise(resolve => {
+    viewer.addEventListener('load', resolve, { once: true });
+    setTimeout(resolve, 15000);
   });
+  setTimeout(() => loading.classList.add('hidden'), 300);
+}
+
+// --- CAMBIO DE ESCENA ---
+sceneSelect.addEventListener('change', async () => {
+  const scene = sceneSelect.value;
+  updateMesaVisibility(scene);
+  await loadScene(scene, currentTable);
 });
 
-// --- PREVENIR SCROLL HORIZONTAL ACCIDENTAL ---
-document.addEventListener('touchmove', (e) => {
-  const selector = document.getElementById('selector');
-  if (selector.contains(e.target)) return;
-  e.preventDefault();
-}, { passive: false });
+// --- CAMBIO DE MESA (solo Estudio) ---
+mesaSelect.addEventListener('change', async () => {
+  currentTable = mesaSelect.value;
+  await loadScene('mesa', currentTable);
+});
 
-console.log('✅ SysNerIA 3D Viewer loaded');
-console.log('📦 Modelos disponibles:');
-console.log('  🪚 Taller Carpintero — 16 MB');
-console.log('  🌳 Bosque Cartoon  — 41 MB');
-console.log('  🪵 Mesa Carpintero — 2.5 MB');
-console.log('  🏖️ Playa Palmeras  — 1.6 MB');
+// --- INICIALIZAR ---
+updateMesaVisibility('playa');
 </script>
 </body>
 </html>
