@@ -364,6 +364,7 @@ let currentTapete = 'Verde';
 let cardMode = 'fan';
 let selectedObject = null; // objeto siendo arrastrado
 let selectedCard = null; // carta seleccionada (no arrastrada)
+let selectedTapete = null; // tapete seleccionado
 let isDragging = false;
 
 const locks = { tapete: false, cartas: false };
@@ -620,11 +621,16 @@ function mostrarCartas(show) {
 }
 
 // ═══════════════════════════════════════════════
-//  INTERACCIÓN: ARRASTRE UNIVERSAL
+//  VARIABLES GLOBALES
 // ═══════════════════════════════════════════════
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+const CLICK_THRESHOLD = 5; // px para distinguir click de drag
+let pointerStartPos = { x: 0, y: 0 };
+let isPointerDown = false;
+let highlightLines = null; // borde de carta seleccionada
+let tapeteHighlight = null; // borde de tapete seleccionado
 
 function getDraggableUnderPointer(event) {
   const rect = renderer.domElement.getBoundingClientRect();
@@ -676,15 +682,13 @@ function getTableIntersect(event) {
 //  INTERACCIÓN: CLICK / ARRASTRE / SELECCIÓN
 // ═══════════════════════════════════════════════
 
-const CLICK_THRESHOLD = 5; // px para distinguir click de drag
-let pointerStartPos = { x: 0, y: 0 };
-let isPointerDown = false;
-let highlightLines = null; // borde de carta seleccionada
-
 function clearSelection() {
   if (highlightLines && highlightLines.parent) scene.remove(highlightLines);
+  if (tapeteHighlight && tapeteHighlight.parent) scene.remove(tapeteHighlight);
   highlightLines = null;
+  tapeteHighlight = null;
   selectedCard = null;
+  selectedTapete = null;
   controls.enableZoom = true;
 }
 
@@ -692,7 +696,7 @@ function selectCard(carta) {
   clearSelection();
   if (!carta) return;
   selectedCard = carta;
-  controls.enableZoom = false; // evitar que la rueda también haga zoom
+  controls.enableZoom = false;
   
   // Crear borde de selección (outline)
   const box = new THREE.Box3().setFromObject(carta);
@@ -708,6 +712,28 @@ function selectCard(carta) {
   highlightLines.position.copy(carta.position);
   highlightLines.position.y += 0.001;
   scene.add(highlightLines);
+}
+
+function selectTapete(tapete) {
+  clearSelection();
+  if (!tapete) return;
+  selectedTapete = tapete;
+  controls.enableZoom = false;
+
+  // Crear borde de selección (azul para diferenciar de cartas)
+  const box = new THREE.Box3().setFromObject(tapete);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+
+  const geo = new THREE.BoxGeometry(size.x * 1.05, 0.002, size.z * 1.05);
+  const edges = new THREE.EdgesGeometry(geo);
+  tapeteHighlight = new THREE.LineSegments(
+    edges,
+    new THREE.LineBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.6 })
+  );
+  tapeteHighlight.position.copy(tapete.position);
+  tapeteHighlight.position.y += 0.002;
+  scene.add(tapeteHighlight);
 }
 
 // ── Pointer events ──
@@ -731,10 +757,10 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
     if (s) { s.material.opacity = 0.4; s.scale.set(1.3, 1.3, 1); }
     renderer.domElement.style.cursor = 'grabbing';
   } else if (obj.userData.isTapete) {
-    // Tapete siempre arrastra directamente
-    clearSelection();
+    // Tapete: seleccionar primero, arrastrar solo si mueve
+    selectTapete(obj);
     selectedObject = obj;
-    isDragging = true;
+    isDragging = false;
     controls.enabled = false;
     obj.position.y += CARD_LIFT * 2;
     renderer.domElement.style.cursor = 'grabbing';
@@ -770,10 +796,14 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   } else if (selectedObject.userData.isTapete) {
     selectedObject.position.y = tableSurfaceY + CARD_LIFT * 2;
   }
-  // Mover el borde de selección con la carta
+  // Mover el borde de selección con la carta o tapete
   if (highlightLines && selectedObject.userData.isCard) {
     highlightLines.position.copy(selectedObject.position);
     highlightLines.position.y += 0.001;
+  }
+  if (tapeteHighlight && selectedObject.userData.isTapete) {
+    tapeteHighlight.position.copy(selectedObject.position);
+    tapeteHighlight.position.y += 0.002;
   }
   renderer.domElement.style.cursor = 'grabbing';
 });
@@ -792,7 +822,16 @@ renderer.domElement.addEventListener('pointerup', () => {
     }
   } else if (selectedObject.userData.isTapete) {
     selectedObject.position.y = tableSurfaceY;
-    clearSelection();
+    // Si no hubo arrastre, mantener seleccionado
+    if (!isDragging) {
+      selectTapete(selectedObject);
+    } else {
+      // Si se movió, mantener borde en posición final
+      if (tapeteHighlight) {
+        tapeteHighlight.position.copy(selectedObject.position);
+        tapeteHighlight.position.y += 0.002;
+      }
+    }
   }
 
   controls.enabled = true;
@@ -801,45 +840,58 @@ renderer.domElement.addEventListener('pointerup', () => {
   renderer.domElement.style.cursor = 'default';
 });
 
-// ── Rueda del ratón: rotar carta seleccionada ──
+// ── Rueda del ratón: rotar carta o tapete seleccionado ──
 renderer.domElement.addEventListener('wheel', (e) => {
-  if (!selectedCard) return;
+  if (!selectedCard && !selectedTapete) return;
   e.preventDefault();
   const delta = e.deltaY > 0 ? -0.15 : 0.15; // ~8.6° por step
-  selectedCard.rotation.y += delta;
-  // Actualizar borde de selección
-  if (highlightLines) {
-    highlightLines.rotation.y = selectedCard.rotation.y;
+  if (selectedCard) {
+    selectedCard.rotation.y += delta;
+    if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
+  }
+  if (selectedTapete) {
+    selectedTapete.rotation.y += delta;
+    if (tapeteHighlight) tapeteHighlight.rotation.y = selectedTapete.rotation.y;
   }
 }, { passive: false });
 
-renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+// ── Click derecho: flip de carta seleccionada ──
+renderer.domElement.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  if (selectedCard) {
+    selectedCard.rotation.x += Math.PI;
+    if (highlightLines) highlightLines.rotation.x = selectedCard.rotation.x;
+  }
+});
 
 // ── Atajos de teclado ──
 document.addEventListener('keydown', (e) => {
-  if (!selectedCard) return;
-  
+  // No interferir con inputs
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  // Escape: limpiar selección
   if (e.key === 'Escape') {
     clearSelection();
     return;
   }
-  
-  // No interferir con inputs
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  
-  let rot = 0;
-  if (e.key === 'r' || e.key === 'R') rot = e.shiftKey ? -0.26 : 0.26; // ~15° spin Y
-  
-  // Flip en X (cara ↔ dorso)
-  if (e.key === 'f' || e.key === 'F') {
-    selectedCard.rotation.x += Math.PI;
-    if (highlightLines) highlightLines.rotation.x = selectedCard.rotation.x;
+
+  // R / Shift+R: rotar seleccionado
+  if (e.key === 'r' || e.key === 'R') {
+    const rot = e.shiftKey ? -0.26 : 0.26; // ~15°
+    if (selectedCard) {
+      selectedCard.rotation.y += rot;
+      if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
+    } else if (selectedTapete) {
+      selectedTapete.rotation.y += rot;
+      if (tapeteHighlight) tapeteHighlight.rotation.y = selectedTapete.rotation.y;
+    }
     e.preventDefault();
   }
-  
-  if (rot !== 0) {
-    selectedCard.rotation.y += rot;
-    if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
+
+  // F: flip de carta seleccionada
+  if ((e.key === 'f' || e.key === 'F') && selectedCard) {
+    selectedCard.rotation.x += Math.PI;
+    if (highlightLines) highlightLines.rotation.x = selectedCard.rotation.x;
     e.preventDefault();
   }
 });
