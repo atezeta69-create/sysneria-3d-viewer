@@ -422,56 +422,6 @@
     margin: auto 3px;
   }
 
-  /* ===== NAV SELECT (DROPDOWNS) ===== */
-  #header-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .nav-select {
-    appearance: none;
-    -webkit-appearance: none;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 6px;
-    color: #c8b898;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 5px 28px 5px 10px;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.2s;
-    font-family: inherit;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a7a5a'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    min-width: 100px;
-  }
-
-  .nav-select:hover {
-    border-color: rgba(255,255,255,0.15);
-  }
-
-  .nav-select:focus {
-    border-color: rgba(180,160,120,0.4);
-  }
-
-  .nav-select option {
-    background: #14141a;
-    color: #c8b898;
-  }
-
-  @media (max-width: 500px) {
-    .nav-select {
-      font-size: 11px;
-      padding: 4px 24px 4px 8px;
-      min-width: 80px;
-    }
-  }
-
-  /* Hide mesa-select when not in Estudio scene (handled by JS) */
-
   /* ===== RESPONSIVE ===== */
   @media (min-width: 768px) {
     #scene-info h2 {
@@ -496,6 +446,7 @@
         <option value="mesa">🎨 Estudio</option>
         <option value="taller">🛠️ Taller</option>
         <option value="referencia">📐 Ref. Cámara</option>
+        <option value="prototipo">⚡ Prueba Mesas</option>
       </select>
       <select id="mesa-select" class="nav-select">
         <option value="roble">🪵 V1 · Roble</option>
@@ -509,7 +460,7 @@
   <div id="viewer-container">
     <model-viewer
       id="viewer"
-      src="assets/mesa_referencia.glb"
+      src="assets/playa.glb"
       alt="Escena 3D"
       camera-controls
       auto-rotate
@@ -694,69 +645,63 @@ if (viewer.canActivateAR) {
   arButton.addEventListener('click', () => viewer.activateAR());
 }
 
-// --- CONFIG DE ESCENAS ---
-const sceneData = {
-  playa: { model: 'assets/playa.glb', title: 'Playa Palmeras', desc: 'Palmeras · arena · océano · nubes', skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr', maxRadius: '20m' },
-  bosque: { model: 'assets/bosque_cartoon.glb', title: 'Bosque Cartoon', desc: '4 robles · agave · suelo de hierba', skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr', maxRadius: '5m' },
-  mesa: { model: 'assets/mesa_carpintero.glb', title: 'Estudio', desc: 'Sala blanca · iluminación de estudio', skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/monochrome_studio_03_2k.hdr', maxRadius: '20m' },
-  taller: { model: 'assets/taller_carpintero.glb', title: 'Taller Carpintero', desc: 'Taller completo · ventana · estanterías · herramientas', skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/brown_photostudio_02_2k.hdr', maxRadius: '20m' },
-  referencia: { model: 'assets/mesa_referencia.glb', title: '📐 Mesa Referencia', desc: 'Cámara validada 3m · 12° · 1.70m · cartas referencia', skybox: '', maxRadius: '5m' }
-};
-
-const sceneSelect = document.getElementById('scene-select');
-const mesaSelect = document.getElementById('mesa-select');
-let currentTable = 'roble';
-
-// --- MOSTRAR/OCULTAR SELECTOR DE MESA ---
-function updateMesaVisibility(scene) {
-  mesaSelect.style.display = (scene === 'mesa') ? '' : 'none';
-}
-
-// --- CARGAR MODELO ---
-async function loadScene(scene, table) {
-  const data = sceneData[scene];
-  sceneTitle.textContent = data.title;
-  sceneDesc.textContent = data.desc;
-  if (data.skybox) viewer.skyboxImage = data.skybox;
-  viewer.maxCameraOrbit = `360deg 89deg ${data.maxRadius}`;
-
-  let src;
-  if (scene === 'mesa') {
-    src = `assets/combinaciones/${scene}_${table}.glb`;
-  } else {
-    src = data.model;
+// --- SCENE SELECT DROPDOWN ---
+document.getElementById('scene-select').addEventListener('change', async (e) => {
+  const val = e.target.value;
+  if (val === 'prototipo') {
+    window.location.href = 'visor-threejs.html';
+    return;
   }
-
+  if (val === 'referencia') {
+    window.location.href = 'visor-threejs.html?model=mesa_referencia.glb';
+    return;
+  }
+  
+  // Scene configs
+  const scenes = {
+    playa:   { model: 'assets/playa.glb',   title: 'Playa Palmeras',    desc: 'Palmeras · arena · océano · nubes',     skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr',                     maxRadius: '20m' },
+    bosque:  { model: 'assets/bosque_cartoon.glb', title: 'Bosque Cartoon', desc: '4 robles · agave · suelo de hierba',  skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr',                     maxRadius: '5m' },
+    mesa:    { model: 'assets/mesa_carpintero.glb', title: 'Estudio',        desc: 'Sala blanca · iluminación de estudio',skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/monochrome_studio_03_2k.hdr',              maxRadius: '20m' },
+    taller:  { model: 'assets/taller_carpintero.glb',title: 'Taller Carpintero',desc: 'Taller · ventana · herramientas',  skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/brown_photostudio_02_2k.hdr',             maxRadius: '20m' },
+  };
+  
+  const s = scenes[val];
+  if (!s) return;
+  
+  sceneTitle.textContent = s.title;
+  sceneDesc.textContent = s.desc;
+  if (s.skybox) viewer.skyboxImage = s.skybox;
+  viewer.maxCameraOrbit = `360deg 89deg ${s.maxRadius}`;
   loading.classList.remove('hidden');
-  viewer.src = src;
-  console.log(`Cargando: ${src}`);
-
+  viewer.src = s.model;
   await new Promise(resolve => {
     viewer.addEventListener('load', resolve, { once: true });
     setTimeout(resolve, 15000);
   });
   setTimeout(() => loading.classList.add('hidden'), 300);
-}
+});
 
-// --- CAMBIO DE ESCENA ---
-sceneSelect.addEventListener('change', async () => {
+// --- TABLE VARIANT SELECT ---
+document.getElementById('mesa-select').addEventListener('change', async (e) => {
+  const table = e.target.value;
+  const sceneSelect = document.getElementById('scene-select');
   const scene = sceneSelect.value;
-  updateMesaVisibility(scene);
-  await loadScene(scene, currentTable);
+  
+  // Only switch table if on a scene that supports variants
+  const comboScenes = ['taller']; // scenes with table variants
+  if (!comboScenes.includes(scene)) return;
+  
+  const model = `assets/combinaciones/${scene}_${table}.glb`;
+  loading.classList.remove('hidden');
+  viewer.src = model;
+  await new Promise(resolve => {
+    viewer.addEventListener('load', resolve, { once: true });
+    setTimeout(resolve, 15000);
+  });
+  setTimeout(() => loading.classList.add('hidden'), 300);
 });
 
-// --- CAMBIO DE MESA (solo Estudio) ---
-mesaSelect.addEventListener('change', async () => {
-  currentTable = mesaSelect.value;
-  await loadScene('mesa', currentTable);
-});
-
-// --- INICIALIZAR ---
-(async () => {
-  updateMesaVisibility('referencia');
-  document.getElementById('scene-select').value = 'referencia';
-  await loadScene('referencia', currentTable);
-})();
+console.log('✅ SysNerIA 3D Viewer loaded');
 </script>
 </body>
 </html>
