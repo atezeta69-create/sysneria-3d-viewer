@@ -3,43 +3,57 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>Visor Three.js — Prueba Mesas</title>
+<title>Visor Three.js — Galería de Mesas</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
-  #ui{position:absolute;top:20px;left:20px;color:#fff;background:rgba(0,0,0,0.8);padding:14px 18px;border-radius:12px;font-size:13px;min-width:200px;z-index:10;pointer-events:none;backdrop-filter:blur(8px)}
+  
+  #ui{position:absolute;top:16px;left:16px;color:#fff;background:rgba(10,10,15,0.85);padding:14px 16px;border-radius:12px;font-size:13px;min-width:210px;z-index:10;pointer-events:none;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.06)}
   #ui *{pointer-events:all}
-  #ui h2{font-size:14px;margin:0 0 6px;color:#88ccff}
-  #ui label{display:block;margin:6px 0 2px;color:#aaa;font-size:12px}
-  #zoomSlider{width:100%;margin:4px 0}
-  #back-link{position:absolute;top:20px;right:20px;z-index:10;color:#88ccff;font-size:12px;text-decoration:none;background:rgba(0,0,0,0.6);padding:6px 12px;border-radius:6px;border:1px solid rgba(136,204,255,0.2)}
-  #back-link:hover{background:rgba(136,204,255,0.1)}
-  #info{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:#888;font-size:12px;background:rgba(0,0,0,0.6);padding:6px 14px;border-radius:6px;z-index:10}
-  #status{position:absolute;top:60px;right:20px;color:#888;font-size:12px;background:rgba(0,0,0,0.6);padding:6px 12px;border-radius:6px;z-index:10}
+  #ui h2{font-size:13px;margin:0 0 8px;color:#c8b898;letter-spacing:0.5px;font-weight:600}
+  #ui .group{font-size:10px;color:#6a6458;margin:8px 0 4px 4px;text-transform:uppercase;letter-spacing:1px}
+  .mesa-btn{display:block;width:100%;text-align:left;background:transparent;border:none;color:#8a8478;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;transition:all 0.15s;font-family:inherit}
+  .mesa-btn:hover{background:rgba(255,255,255,0.04);color:#c8b898}
+  .mesa-btn.active{background:rgba(200,184,152,0.1);color:#d4c5a9;border-left:2px solid #c8b898}
+  .mesa-btn .size{float:right;font-size:10px;color:#5a5448;margin-top:1px}
+  #zoomSlider{width:100%;margin:6px 0;accent-color:#c8b898}
+  .zoom-labels{display:flex;justify-content:space-between;color:#5a5448;font-size:9px;margin-top:-2px}
+  #back-link{position:absolute;top:16px;right:16px;z-index:10;color:#88ccff;font-size:12px;text-decoration:none;background:rgba(0,0,0,0.6);padding:5px 10px;border-radius:6px;border:1px solid rgba(136,204,255,0.15)}
+  #back-link:hover{background:rgba(136,204,255,0.08)}
+  #status{position:absolute;bottom:16px;right:16px;z-index:10;color:#5a5448;font-size:11px;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
   #status .ok{color:#4caf50}
   #status .loading{color:#ffa726}
+  #info{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#3a3428;font-size:11px;text-align:center;pointer-events:none}
+  #info span{background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:4px}
 </style>
 </head>
 <body>
 
-<a id="back-link" href="index.html">← Volver al visor</a>
+<a id=back-link href=index.html>← Volver</a>
 
 <div id=ui>
-  <h2>◈ Prueba Mesas</h2>
-  <label>Zoom</label>
-  <input type=range id=zoomSlider min=0.3 max=8 step=0.1 value=2.5>
-  <div style=display:flex;justify-content:space-between;color:#666;font-size:10px>
-    <span>3D</span><span>▼ cenital</span>
-  </div>
-  <label style=margin-top:8px>Mesa:</label>
-  <select id=modelSelect style="width:100%;background:#222;color:#ccc;border:1px solid #444;border-radius:4px;padding:4px;font-size:12px">
-    <option value="prueba_mesa_zeta.glb">Zet</option>
-    <option value="mesa_referencia.glb">Referencia (cartas)</option>
-  </select>
+  <h2>◈ Galería de Mesas</h2>
+  
+  <div class=group>🪵 Orgánica (tronco)</div>
+  <button class="mesa-btn active" data-model="assets/mesas/mesa_organica_v01.glb">V1 · Detallada <span class=size>68 KB</span></button>
+  <button class="mesa-btn" data-model="assets/mesas/mesa_organica_v02.glb">V2 · Media <span class=size>15 KB</span></button>
+  <button class="mesa-btn" data-model="assets/mesas/mesa_organica_v03.glb">V3 · Simple <span class=size>15 KB</span></button>
+  <button class="mesa-btn" data-model="assets/mesas/mesa_v3_con_carta.glb">V3 + Carta <span class=size>15 KB</span></button>
+  
+  <div class=group>📐 Rectangular (clásica)</div>
+  <button class="mesa-btn" data-model="assets/mesas/mesa_rectangular_v01.glb">V1 <span class=size>25 KB</span></button>
+  <button class="mesa-btn" data-model="assets/mesas/mesa_rectangular_v02.glb">V2 <span class=size>25 KB</span></button>
+
+  <div class=group>📏 Referencia</div>
+  <button class="mesa-btn" data-model="assets/mesa_referencia.glb">Cartas de colores <span class=size>12 KB</span></button>
+  
+  <label style="display:block;margin-top:10px;color:#6a6458;font-size:11px">Zoom</label>
+  <input type=range id=zoomSlider min=0.5 max=8 step=0.1 value=2.5>
+  <div class=zoom-labels><span>3D</span><span>▼ cenital</span></div>
 </div>
 
-<div id=info>🖱 Rueda=zoom · Click+arrastrar=pan · Ctrl+rueda=rotar</div>
-<div id=status><span class=loading>●</span> Cargando modelo...</div>
+<div id=status><span class=ok>●</span> Listo</div>
+<div id=info><span>🖱 Zoom · Click+arrastrar · Ctrl+rueda</span></div>
 
 <script type=importmap>
 {
@@ -59,8 +73,8 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a2e);
 
 const aspect = window.innerWidth / window.innerHeight;
-const camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 100);
-camera.position.set(0, 1.70, -3.0);
+const camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100);
+camera.position.set(0, 1.50, -2.8);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -72,87 +86,94 @@ renderer.toneMappingExposure = 1.0;
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0.75, 0);
+controls.target.set(0, 0.5, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.minDistance = 0.3;
-controls.maxDistance = 8;
+controls.minDistance = 0.5;
+controls.maxDistance = 6;
 controls.minPolarAngle = 0;
-controls.maxPolarAngle = Math.PI / 2.2;
+controls.maxPolarAngle = Math.PI / 2.1;
 controls.update();
 controls.saveState();
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-const dl = new THREE.DirectionalLight(0xffffff, 3);
+// ─── LUCES ───────────────────────────────────
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+const dl = new THREE.DirectionalLight(0xffffff, 4);
 dl.position.set(3, 6, 4);
 dl.castShadow = true;
 dl.shadow.mapSize.width = 1024;
 dl.shadow.mapSize.height = 1024;
 scene.add(dl);
-const fl = new THREE.DirectionalLight(0x8888ff, 0.5);
+const fl = new THREE.DirectionalLight(0x8888ff, 0.6);
 fl.position.set(-2, 3, -3);
 scene.add(fl);
+const rim = new THREE.DirectionalLight(0xffdd99, 0.3);
+rim.position.set(-1, 1, 4);
+scene.add(rim);
 
+// ─── SUELO ───────────────────────────────────
 const flr = new THREE.Mesh(
-  new THREE.PlaneGeometry(8, 8),
-  new THREE.MeshStandardMaterial({ color: 0x2a2a3e, roughness: 0.9 })
+  new THREE.PlaneGeometry(6, 6),
+  new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.9, metalness: 0 })
 );
 flr.rotation.x = -Math.PI / 2;
 flr.position.y = -0.01;
 flr.receiveShadow = true;
 scene.add(flr);
 
+// ─── CARGA ───────────────────────────────────
 const loader = new GLTFLoader();
 let currentModel = null;
 
 function cargarModelo(url) {
   if (currentModel) { scene.remove(currentModel); currentModel = null; }
+  
+  // Animación de transición
   document.querySelector('#status').innerHTML = '<span class=loading>●</span> Cargando...';
 
-  loader.load('assets/' + url, (gltf) => {
+  loader.load(url, (gltf) => {
     const m = gltf.scene;
     m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-    // Centrar el modelo: solo contar meshes, ignorar cámaras/luces
+
+    // Usar solo meshes para bounding box
     const box = new THREE.Box3();
     const meshes = [];
     m.traverse(c => { if (c.isMesh) { box.expandByObject(c); meshes.push(c); } });
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
 
-    // Reposicionar cada mesh individualmente
-    meshes.forEach(mesh => {
-      mesh.position.sub(center);
-    });
-    // Subir para que toque el suelo
-    meshes.forEach(mesh => {
-      mesh.position.y += size.y / 2;
-    });
+    // Centrar cada mesh
+    meshes.forEach(mesh => { mesh.position.sub(center); });
+    meshes.forEach(mesh => { mesh.position.y += size.y / 2; });
+
     currentModel = m;
     scene.add(m);
 
-    controls.target.set(0, size.y * 0.6, 0);
+    controls.target.set(0, Math.min(size.y * 0.6, 0.6), 0);
     controls.update();
-
-    document.querySelector('#status').innerHTML = '<span class=ok>●</span> ' + url;
     controls.reset();
+
+    document.querySelector('#status').innerHTML = '<span class=ok>●</span> OK';
   }, (xhr) => {
     const p = Math.round((xhr.loaded / xhr.total) * 100);
-    document.querySelector('#status').innerHTML = `<span class=loading>●</span> ${p}%`;
+    if (p < 100) document.querySelector('#status').innerHTML = `<span class=loading>●</span> ${p}%`;
   }, (err) => {
     document.querySelector('#status').innerHTML = '<span style=color:#f44>●</span> Error';
     console.error(err);
   });
 }
 
-// Detectar modelo desde URL ?model=...
-const params = new URLSearchParams(window.location.search);
-const initialModel = params.get('model') || 'prueba_mesa_zeta.glb';
-cargarModelo(initialModel);
+// ─── BOTONES ─────────────────────────────────
+const btns = document.querySelectorAll('.mesa-btn');
+btns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    btns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cargarModelo(btn.dataset.model);
+  });
+});
 
-const sel = document.querySelector('#modelSelect');
-sel.value = initialModel;
-sel.addEventListener('change', () => cargarModelo(sel.value));
-
+// ─── ZOOM ─────────────────────────────────────
 const slider = document.querySelector('#zoomSlider');
 slider.addEventListener('input', (e) => {
   const dist = parseFloat(e.target.value);
@@ -162,6 +183,10 @@ slider.addEventListener('input', (e) => {
   controls.update();
 });
 
+// ─── CARGA INICIAL ──────────────────────────
+cargarModelo('assets/mesas/mesa_organica_v01.glb');
+
+// ─── RESIZE ──────────────────────────────────
 window.addEventListener('resize', () => {
   const a = window.innerWidth / window.innerHeight;
   camera.aspect = a;
@@ -169,6 +194,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// ─── ANIMACIÓN ───────────────────────────────
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
