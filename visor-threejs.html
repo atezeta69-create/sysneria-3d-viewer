@@ -31,6 +31,12 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
 .toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#8a8478;transition:all 0.2s}
 .toggle-switch.on::after{left:16px;background:#c8b898}
 
+/* ── Botón de bloqueo ── */
+.lock-btn{font-size:12px;cursor:pointer;margin-left:auto;opacity:0.5;transition:opacity 0.2s;padding:2px 4px;border-radius:4px;user-select:none}
+.lock-btn:hover{opacity:1;background:rgba(255,255,255,0.06)}
+.lock-btn.locked{opacity:1}
+.lock-btn.locked:hover{background:rgba(255,100,100,0.1)}
+
 /* ── Selector de baraja ── */
 .deck-select{display:flex;gap:4px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
 .deck-select.active{opacity:1;pointer-events:all}
@@ -88,9 +94,11 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
   </div>
   <div class="toggle-row" data-layer="tapete">
     <span class="toggle-switch"></span> Tapete
+    <span class="lock-btn" data-lock="tapete" title="Bloquear / desbloquear">🔓</span>
   </div>
   <div class="toggle-row" data-layer="cartas">
     <span class="toggle-switch"></span> Cartas
+    <span class="lock-btn" data-lock="cartas" title="Bloquear / desbloquear">🔓</span>
   </div>
 
   <div class="tapete-select" id="tapete-options">
@@ -239,8 +247,11 @@ let currentModel = null;
 let currentDeck = 'poker_normal';
 let currentTapete = 'Verde';
 let cardMode = 'fan';
-let selectedObject = null; // carta o tapete seleccionado para arrastrar
+let selectedObject = null; // objeto siendo arrastrado
+let selectedCard = null; // carta seleccionada (no arrastrada)
 let isDragging = false;
+
+const locks = { tapete: false, cartas: false };
 
 const loader = new GLTFLoader();
 
@@ -494,16 +505,18 @@ function getDraggableUnderPointer(event) {
   raycaster.setFromCamera(pointer, camera);
 
   const targets = [];
-  // Cartas
-  cartas.forEach(obj => {
-    if (obj.parent) {
-      obj.traverse(child => {
-        if (child.isMesh && !child.userData.isShadow) targets.push(child);
-      });
-    }
-  });
-  // Tapete
-  if (tapeteObject && tapeteObject.parent) {
+  // Cartas (solo si no están bloqueadas)
+  if (!locks.cartas) {
+    cartas.forEach(obj => {
+      if (obj.parent) {
+        obj.traverse(child => {
+          if (child.isMesh && !child.userData.isShadow) targets.push(child);
+        });
+      }
+    });
+  }
+  // Tapete (solo si no está bloqueado)
+  if (!locks.tapete && tapeteObject && tapeteObject.parent) {
     tapeteObject.traverse(child => {
       if (child.isMesh) targets.push(child);
     });
@@ -512,7 +525,6 @@ function getDraggableUnderPointer(event) {
   const hits = raycaster.intersectObjects(targets, false);
   if (hits.length > 0) {
     let hit = hits[0].object;
-    // Buscar el padre con userData.draggable
     while (hit.parent) {
       if (hit.parent.userData && hit.parent.userData.draggable) return hit.parent;
       hit = hit.parent;
@@ -532,32 +544,90 @@ function getTableIntersect(event) {
   return raycaster.ray.intersectPlane(plane, pt) ? pt : null;
 }
 
-let dragStartPos = new THREE.Vector3();
+// ═══════════════════════════════════════════════
+//  INTERACCIÓN: CLICK / ARRASTRE / SELECCIÓN
+// ═══════════════════════════════════════════════
 
+const CLICK_THRESHOLD = 5; // px para distinguir click de drag
+let pointerStartPos = { x: 0, y: 0 };
+let isPointerDown = false;
+let highlightLines = null; // borde de carta seleccionada
+
+function clearSelection() {
+  if (highlightLines && highlightLines.parent) scene.remove(highlightLines);
+  highlightLines = null;
+  selectedCard = null;
+}
+
+function selectCard(carta) {
+  clearSelection();
+  if (!carta) return;
+  selectedCard = carta;
+  
+  // Crear borde de selección (outline)
+  const box = new THREE.Box3().setFromObject(carta);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  
+  const geo = new THREE.BoxGeometry(size.x * 1.1, 0.002, size.z * 1.1);
+  const edges = new THREE.EdgesGeometry(geo);
+  highlightLines = new THREE.LineSegments(
+    edges,
+    new THREE.LineBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.7 })
+  );
+  highlightLines.position.copy(carta.position);
+  highlightLines.position.y += 0.001;
+  scene.add(highlightLines);
+}
+
+// ── Pointer events ──
 renderer.domElement.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
+  pointerStartPos.x = e.clientX;
+  pointerStartPos.y = e.clientY;
+  isPointerDown = true;
   const obj = getDraggableUnderPointer(e);
-  if (!obj) return;
-
-  selectedObject = obj;
-  isDragging = false;
-  controls.enabled = false;
-  dragStartPos.copy(obj.position);
-
-  // Levantar objeto
+  if (!obj) { clearSelection(); return; }
+  
+  // Si es carta, la pre-seleccionamos (aún no sabemos si es click o drag)
   if (obj.userData.isCard) {
+    selectCard(obj);
+    selectedObject = obj;
+    isDragging = false;
+    controls.enabled = false;
+    // Levantar ligeramente (preparado para posible drag)
     obj.position.y = tableSurfaceY + CARD_OFFSET + CARD_LIFT;
     const s = obj.userData.shadow;
     if (s) { s.material.opacity = 0.4; s.scale.set(1.3, 1.3, 1); }
+    renderer.domElement.style.cursor = 'grabbing';
   } else if (obj.userData.isTapete) {
+    // Tapete siempre arrastra directamente
+    clearSelection();
+    selectedObject = obj;
+    isDragging = true;
+    controls.enabled = false;
     obj.position.y += CARD_LIFT * 2;
+    renderer.domElement.style.cursor = 'grabbing';
   }
-
-  renderer.domElement.style.cursor = 'grabbing';
   e.preventDefault();
 });
 
 renderer.domElement.addEventListener('pointermove', (e) => {
+  // Cursor hover
+  if (!selectedObject && !isPointerDown) {
+    const obj = getDraggableUnderPointer(e);
+    renderer.domElement.style.cursor = obj ? 'grab' : 'default';
+    return;
+  }
+  
+  // Si estábamos en pointerdown pero no hemos movido lo suficiente, esperar
+  if (isPointerDown && !isDragging) {
+    const dx = Math.abs(e.clientX - pointerStartPos.x);
+    const dy = Math.abs(e.clientY - pointerStartPos.y);
+    if (dx < CLICK_THRESHOLD && dy < CLICK_THRESHOLD) return;
+    isDragging = true;
+  }
+  
   if (!selectedObject) return;
   const pt = getTableIntersect(e);
   if (!pt) return;
@@ -570,18 +640,29 @@ renderer.domElement.addEventListener('pointermove', (e) => {
   } else if (selectedObject.userData.isTapete) {
     selectedObject.position.y = tableSurfaceY + CARD_LIFT * 2;
   }
+  // Mover el borde de selección con la carta
+  if (highlightLines && selectedObject.userData.isCard) {
+    highlightLines.position.copy(selectedObject.position);
+    highlightLines.position.y += 0.001;
+  }
   renderer.domElement.style.cursor = 'grabbing';
 });
 
 renderer.domElement.addEventListener('pointerup', () => {
+  isPointerDown = false;
   if (!selectedObject) return;
   
   if (selectedObject.userData.isCard) {
     selectedObject.position.y = tableSurfaceY + CARD_OFFSET;
     const s = selectedObject.userData.shadow;
     if (s) { s.material.opacity = 0.25; s.scale.set(1, 1, 1); }
+    // Si no hubo arrastre (fue un click), mantener seleccionada
+    if (!isDragging) {
+      selectCard(selectedObject);
+    }
   } else if (selectedObject.userData.isTapete) {
     selectedObject.position.y = tableSurfaceY;
+    clearSelection();
   }
 
   controls.enabled = true;
@@ -590,18 +671,56 @@ renderer.domElement.addEventListener('pointerup', () => {
   renderer.domElement.style.cursor = 'default';
 });
 
+// ── Rueda del ratón: rotar carta seleccionada ──
+renderer.domElement.addEventListener('wheel', (e) => {
+  if (!selectedCard) return;
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.15 : 0.15; // ~8.6° por step
+  selectedCard.rotation.y += delta;
+  // Actualizar borde de selección
+  if (highlightLines) {
+    highlightLines.rotation.y = selectedCard.rotation.y;
+  }
+}, { passive: false });
+
 renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// Cursor pointer al pasar sobre objetos
-renderer.domElement.addEventListener('pointermove', (e) => {
-  if (selectedObject) return; // ya estamos arrastrando
-  const obj = getDraggableUnderPointer(e);
-  renderer.domElement.style.cursor = obj ? 'grab' : 'default';
+// ── Atajos de teclado ──
+document.addEventListener('keydown', (e) => {
+  if (!selectedCard) return;
+  
+  if (e.key === 'Escape') {
+    clearSelection();
+    return;
+  }
+  
+  // No interferir con inputs
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  
+  let rot = 0;
+  if (e.key === 'r' || e.key === 'R') rot = e.shiftKey ? -0.26 : 0.26; // ~15°
+  
+  if (rot !== 0) {
+    selectedCard.rotation.y += rot;
+    if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
+    e.preventDefault();
+  }
 });
 
 // ═══════════════════════════════════════════════
 //  CONTROLES UI
 // ═══════════════════════════════════════════════
+
+// ── Botones de bloqueo ──
+document.querySelectorAll('.lock-btn[data-lock]').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const layer = btn.dataset.lock;
+    locks[layer] = !locks[layer];
+    btn.classList.toggle('locked', locks[layer]);
+    btn.textContent = locks[layer] ? '🔒' : '🔓';
+  });
+});
 
 // ── Botones de mesa ──
 document.querySelectorAll('.mesa-btn').forEach(btn => {
