@@ -3,28 +3,50 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>Visor Three.js — Galería de Mesas</title>
+<title>Visor Three.js — Galería de Mesas 🃏</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
-  
-  #ui{position:absolute;top:16px;left:16px;color:#fff;background:rgba(10,10,15,0.85);padding:14px 16px;border-radius:12px;font-size:13px;min-width:210px;z-index:10;pointer-events:none;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.06)}
-  #ui *{pointer-events:all}
-  #ui h2{font-size:13px;margin:0 0 8px;color:#c8b898;letter-spacing:0.5px;font-weight:600}
-  #ui .group{font-size:10px;color:#6a6458;margin:8px 0 4px 4px;text-transform:uppercase;letter-spacing:1px}
-  .mesa-btn{display:block;width:100%;text-align:left;background:transparent;border:none;color:#8a8478;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;transition:all 0.15s;font-family:inherit}
-  .mesa-btn:hover{background:rgba(255,255,255,0.04);color:#c8b898}
-  .mesa-btn.active{background:rgba(200,184,152,0.1);color:#d4c5a9;border-left:2px solid #c8b898}
-  .mesa-btn .size{float:right;font-size:10px;color:#5a5448;margin-top:1px}
-  #zoomSlider{width:100%;margin:6px 0;accent-color:#c8b898}
-  .zoom-labels{display:flex;justify-content:space-between;color:#5a5448;font-size:9px;margin-top:-2px}
-  #back-link{position:absolute;top:16px;right:16px;z-index:10;color:#88ccff;font-size:12px;text-decoration:none;background:rgba(0,0,0,0.6);padding:5px 10px;border-radius:6px;border:1px solid rgba(136,204,255,0.15)}
-  #back-link:hover{background:rgba(136,204,255,0.08)}
-  #status{position:absolute;bottom:16px;right:16px;z-index:10;color:#5a5448;font-size:11px;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
-  #status .ok{color:#4caf50}
-  #status .loading{color:#ffa726}
-  #info{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#3a3428;font-size:11px;text-align:center;pointer-events:none}
-  #info span{background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:4px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
+
+/* ── UI Lateral ── */
+#ui{position:absolute;top:16px;left:16px;color:#fff;background:rgba(10,10,15,0.85);padding:14px 16px;border-radius:12px;font-size:13px;min-width:210px;z-index:10;pointer-events:none;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.06)}
+#ui *{pointer-events:all}
+#ui h2{font-size:13px;margin:0 0 8px;color:#c8b898;letter-spacing:0.5px;font-weight:600}
+#ui .group{font-size:10px;color:#6a6458;margin:8px 0 4px 4px;text-transform:uppercase;letter-spacing:1px}
+.mesa-btn{display:block;width:100%;text-align:left;background:transparent;border:none;color:#8a8478;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:12px;transition:all 0.15s;font-family:inherit}
+.mesa-btn:hover{background:rgba(255,255,255,0.04);color:#c8b898}
+.mesa-btn.active{background:rgba(200,184,152,0.1);color:#d4c5a9;border-left:2px solid #c8b898}
+.mesa-btn .size{float:right;font-size:10px;color:#5a5448;margin-top:1px}
+#zoomSlider{width:100%;margin:6px 0;accent-color:#c8b898}
+.zoom-labels{display:flex;justify-content:space-between;color:#5a5448;font-size:9px;margin-top:-2px}
+#back-link{position:absolute;top:16px;right:16px;z-index:10;color:#88ccff;font-size:12px;text-decoration:none;background:rgba(0,0,0,0.6);padding:5px 10px;border-radius:6px;border:1px solid rgba(136,204,255,0.15)}
+#back-link:hover{background:rgba(136,204,255,0.08)}
+#status{position:absolute;bottom:16px;right:16px;z-index:10;color:#5a5448;font-size:11px;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
+#status .ok{color:#4caf50}
+#status .loading{color:#ffa726}
+#status .card-mode{color:#c8b898;margin-left:8px}
+#info{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);color:#3a3428;font-size:11px;text-align:center;pointer-events:none;z-index:10}
+#info span{background:rgba(0,0,0,0.3);padding:3px 10px;border-radius:4px}
+
+/* ── Botones de cartas ── */
+#card-tools{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:8px;pointer-events:none}
+#card-tools *{pointer-events:all}
+.card-btn{background:rgba(10,10,15,0.8);border:1px solid rgba(200,184,152,0.2);color:#c8b898;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;backdrop-filter:blur(8px);transition:all 0.15s}
+.card-btn:hover{background:rgba(200,184,152,0.12)}
+.card-btn.active{background:rgba(200,184,152,0.15);border-color:#c8b898}
+.card-btn .badge{background:rgba(200,184,152,0.2);padding:1px 6px;border-radius:4px;margin-left:6px;font-size:10px}
+#card-count{position:absolute;bottom:60px;right:16px;z-index:10;color:#5a5448;font-size:11px;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
+
+/* ── Modal de carta ── */
+#card-info-modal{display:none;position:absolute;bottom:100px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(10,10,15,0.92);border:1px solid rgba(200,184,152,0.15);border-radius:10px;padding:10px 16px;color:#fff;font-size:12px;pointer-events:none;backdrop-filter:blur(10px);min-width:160px;text-align:center}
+#card-info-modal.show{display:block}
+
+/* ── Responsive ── */
+@media(max-width:600px){
+  #ui{top:10px;left:10px;padding:10px 12px;min-width:160px;font-size:11px}
+  #card-tools{bottom:50px;gap:4px}
+  .card-btn{font-size:10px;padding:4px 10px}
+}
 </style>
 </head>
 <body>
@@ -35,10 +57,10 @@
   <h2>◈ Galería de Mesas</h2>
   
   <div class=group>🪵 Orgánica (tronco)</div>
-  <button class="mesa-btn active" data-model="assets/mesas/mesa_organica_v01.glb">V1 · Detallada <span class=size>68 KB</span></button>
-  <button class="mesa-btn" data-model="assets/mesas/mesa_organica_v02.glb">V2 · Media <span class=size>15 KB</span></button>
-  <button class="mesa-btn" data-model="assets/mesas/mesa_organica_v03.glb">V3 · Simple <span class=size>15 KB</span></button>
-  <button class="mesa-btn" data-model="assets/mesas/mesa_v3_con_carta.glb">V3 + Carta <span class=size>15 KB</span></button>
+  <button class="mesa-btn active" data-model="assets/mesas/mesa_organica_v01.glb">V1 · Detallada <span class=size>69 KB</span></button>
+  <button class="mesa-btn" data-model="assets/mesas/mesa_organica_v02.glb">V2 · Zet <span class=size>16 KB</span></button>
+  <button class="mesa-btn" data-model="assets/mesas/mesa_organica_v03.glb">V3 · Zet <span class=size>16 KB</span></button>
+  <button class="mesa-btn" data-model="assets/mesas/mesa_v3_con_carta.glb">V3 + Carta <span class=size>21 KB</span></button>
   
   <div class=group>📐 Rectangular (clásica)</div>
   <button class="mesa-btn" data-model="assets/mesas/mesa_rectangular_v01.glb">V1 <span class=size>25 KB</span></button>
@@ -52,8 +74,17 @@
   <div class=zoom-labels><span>3D</span><span>▼ cenital</span></div>
 </div>
 
+<div id=card-tools>
+  <button class="card-btn active" data-mode="ordered">🎯 Ordenado <span class=badge>mazo</span></button>
+  <button class="card-btn" data-mode="free">🖐️ Libre</button>
+  <button class="card-btn" id="reset-cards">⟲ Repartir</button>
+</div>
+
+<div id=card-count>🃏 <span id=card-num>0</span> cartas</div>
+<div id=card-info-modal>🖱 Arrastra las cartas sobre la mesa</div>
+
 <div id=status><span class=ok>●</span> Listo</div>
-<div id=info><span>🖱 Zoom · Click+arrastrar · Ctrl+rueda</span></div>
+<div id=info><span>🖱 Click carta → arrastra · Click mesa → suelta · Ctrl+rueda zoom</span></div>
 
 <script type=importmap>
 {
@@ -68,6 +99,10 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+// ═══════════════════════════════════════════════
+//  ESCENA BASE
+// ═══════════════════════════════════════════════
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a2e);
@@ -96,7 +131,7 @@ controls.maxPolarAngle = Math.PI / 2.1;
 controls.update();
 controls.saveState();
 
-// ─── LUCES ───────────────────────────────────
+// ── LUCES ──
 scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 const dl = new THREE.DirectionalLight(0xffffff, 4);
 dl.position.set(3, 6, 4);
@@ -111,49 +146,62 @@ const rim = new THREE.DirectionalLight(0xffdd99, 0.3);
 rim.position.set(-1, 1, 4);
 scene.add(rim);
 
-// ─── SUELO ───────────────────────────────────
-const flr = new THREE.Mesh(
+// ── SUELO ──
+const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(6, 6),
   new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.9, metalness: 0 })
 );
-flr.rotation.x = -Math.PI / 2;
-flr.position.y = -0.01;
-flr.receiveShadow = true;
-scene.add(flr);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.01;
+floor.receiveShadow = true;
+scene.add(floor);
 
-// ─── CARGA ───────────────────────────────────
+// ═══════════════════════════════════════════════
+//  CARGA DE MODELOS (mesas)
+// ═══════════════════════════════════════════════
+
 const loader = new GLTFLoader();
 let currentModel = null;
+let currentModelBox = null; // bounding box de la mesa activa
+let tableSurfaceY = 0.33; // altura de la superficie de la mesa (se actualiza al cargar)
 
 function cargarModelo(url) {
   if (currentModel) { scene.remove(currentModel); currentModel = null; }
+  currentModelBox = null;
   
-  // Animación de transición
   document.querySelector('#status').innerHTML = '<span class=loading>●</span> Cargando...';
 
   loader.load(url, (gltf) => {
     const m = gltf.scene;
     m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
 
-    // Usar solo meshes para bounding box
     const box = new THREE.Box3();
     const meshes = [];
     m.traverse(c => { if (c.isMesh) { box.expandByObject(c); meshes.push(c); } });
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
 
-    // Centrar cada mesh
     meshes.forEach(mesh => { mesh.position.sub(center); });
     meshes.forEach(mesh => { mesh.position.y += size.y / 2; });
 
     currentModel = m;
+    currentModelBox = box.clone();
+    tableSurfaceY = size.y;
     scene.add(m);
 
     controls.target.set(0, Math.min(size.y * 0.6, 0.6), 0);
     controls.update();
     controls.reset();
 
-    document.querySelector('#status').innerHTML = '<span class=ok>●</span> OK';
+    document.querySelector('#status').innerHTML = '<span class=ok>●</span> Listo';
+    document.querySelector('#card-num').textContent = cards.length;
+    
+    // Recolocar cartas sobre la nueva mesa
+    if (cardMode === 'ordered') {
+      ordenarCartas();
+    } else {
+      repartirCartas();
+    }
   }, (xhr) => {
     const p = Math.round((xhr.loaded / xhr.total) * 100);
     if (p < 100) document.querySelector('#status').innerHTML = `<span class=loading>●</span> ${p}%`;
@@ -163,7 +211,367 @@ function cargarModelo(url) {
   });
 }
 
-// ─── BOTONES ─────────────────────────────────
+// ═══════════════════════════════════════════════
+//  SISTEMA DE CARTAS
+// ═══════════════════════════════════════════════
+
+// Dimensiones de carta (proporción 63×88 mm, escaladas al mundo)
+const CARD_W = 0.12;  // ancho
+const CARD_H = 0.168; // alto (~63×88 mm)
+const CARD_D = 0.003; // grosor mínimo
+const CARD_LIFT = 0.02; // cuanto se levanta al seleccionar
+
+const cards = [];
+let selectedCard = null;
+let cardMode = 'ordered'; // 'ordered' | 'free'
+let isDragging = false;
+let dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+let dragOffset = new THREE.Vector3();
+
+// Colores para las cartas de prueba
+const CARD_COLORS = [
+  0xd4a574, // dorado
+  0x7ab0d4, // azul
+  0xa8d47a, // verde
+  0xd47a7a, // rojo
+  0xd4aed4, // lila
+  0xaed4d4, // celeste
+  0xd4c87a, // amarillo
+  0xd47aa8, // rosa
+];
+
+// Símbolos de palo
+const PALOS = ['♠', '♥', '♦', '♣'];
+const VALORES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+// ── Crear una carta como objeto 3D ──
+function crearCarta(index, color, texto) {
+  const group = new THREE.Group();
+  group.userData.isCard = true;
+  group.userData.index = index;
+  group.userData.homePos = null; // posición original
+  group.userData.isFree = false; // en modo libre?
+
+  // Cuerpo de la carta (blanco, con borde)
+  const bodyGeo = new THREE.BoxGeometry(CARD_W, CARD_D, CARD_H);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0xf5f0e8,
+    roughness: 0.3,
+    metalness: 0.05,
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.castShadow = true;
+  group.add(body);
+
+  // Borde/filo de la carta (da el aspecto de grosor)
+  const edgeMat = new THREE.MeshStandardMaterial({
+    color: 0xddd8cc,
+    roughness: 0.5,
+    metalness: 0,
+  });
+  const edge = new THREE.Mesh(bodyGeo, edgeMat);
+  edge.scale.set(1.002, 1, 1.002);
+  edge.position.y = -CARD_D * 0.5;
+  group.add(edge);
+
+  // Placa frontal con el diseño
+  const faceGeo = new THREE.PlaneGeometry(CARD_W * 0.88, CARD_H * 0.88);
+  const faceMat = new THREE.MeshStandardMaterial({
+    color: color,
+    roughness: 0.4,
+    metalness: 0.1,
+    side: THREE.DoubleSide,
+  });
+  const face = new THREE.Mesh(faceGeo, faceMat);
+  face.position.y = CARD_D * 0.5 + 0.001;
+  group.add(face);
+
+  // Sombra bajo la carta (plano semitransparente)
+  const shadowGeo = new THREE.PlaneGeometry(CARD_W * 1.1, CARD_H * 1.1);
+  const shadowMat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.2,
+    depthWrite: false,
+  });
+  const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.001;
+  shadow.userData.isShadow = true;
+  group.add(shadow);
+
+  // Guardar referencias
+  group.userData.body = body;
+  group.userData.shadow = shadow;
+
+  return group;
+}
+
+// ── Generar cartas de prueba ──
+function generarCartasPrueba(cantidad = 5) {
+  // Limpiar cartas existentes
+  cards.forEach(c => scene.remove(c));
+  cards.length = 0;
+
+  for (let i = 0; i < cantidad; i++) {
+    const color = CARD_COLORS[i % CARD_COLORS.length];
+    const carta = crearCarta(i, color, `${VALORES[i % VALORES.length]}${PALOS[i % PALOS.length]}`);
+    
+    // Posición inicial: mazo apilado
+    const x = (i - (cantidad - 1) / 2) * 0.005;
+    const z = (i - (cantidad - 1) / 2) * 0.005;
+    const y = tableSurfaceY + i * 0.0035; // apilado sobre la mesa
+    
+    carta.position.set(x, y, z);
+    carta.userData.homePos = new THREE.Vector3(x, y, z);
+    
+    cards.push(carta);
+    scene.add(carta);
+  }
+
+  document.querySelector('#card-num').textContent = cards.length;
+}
+
+// ── Modo Ordenado: colocar cartas en posiciones fijas ──
+function ordenarCartas() {
+  const n = cards.length;
+  const spacing = 0.045;
+  const startX = -(n - 1) * spacing / 2;
+
+  cards.forEach((carta, i) => {
+    const x = startX + i * spacing;
+    const z = 0;
+    const y = tableSurfaceY;
+    
+    carta.position.set(x, y, z);
+    carta.rotation.set(0, 0, 0);
+    carta.userData.homePos = new THREE.Vector3(x, y, z);
+    carta.userData.isFree = false;
+    
+    // Sombra proporcionada
+    const shadow = carta.userData.shadow;
+    if (shadow) {
+      shadow.material.opacity = 0.2;
+    }
+  });
+  
+  // Sombras consistentes para el mazo
+  cards.forEach((carta, i) => {
+    if (i > 0) {
+      const shadow = carta.userData.shadow;
+      if (shadow) shadow.material.opacity = 0.05;
+    }
+  });
+}
+
+// ── Modo Libre: repartir cartas sobre la mesa ──
+function repartirCartas() {
+  const n = cards.length;
+  const radio = 0.08;
+  
+  cards.forEach((carta, i) => {
+    const angle = (i / n) * Math.PI * 2;
+    const x = Math.cos(angle) * radio + (Math.random() - 0.5) * 0.03;
+    const z = Math.sin(angle) * radio + (Math.random() - 0.5) * 0.03;
+    const y = tableSurfaceY;
+    const rot = Math.random() * Math.PI * 2;
+    
+    carta.position.set(x, y, z);
+    carta.rotation.set(0, rot, 0);
+    carta.userData.homePos = new THREE.Vector3(x, y, z);
+    carta.userData.isFree = true;
+    
+    const shadow = carta.userData.shadow;
+    if (shadow) shadow.material.opacity = 0.2;
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  INTERACCIÓN: ARRASTRE DE CARTAS
+// ═══════════════════════════════════════════════
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const planeIntersect = new THREE.Vector3();
+
+// ── Obtener altura de la mesa en un punto XZ ──
+function getTableY(x, z) {
+  return tableSurfaceY;
+}
+
+// ── ¿Click está sobre una carta? ──
+function getCardUnderPointer(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(pointer, camera);
+  
+  // Recoger todos los objetos de cartas
+  const cardMeshes = [];
+  cards.forEach(carta => {
+    carta.traverse(child => {
+      if (child.isMesh && child.userData.isShadow !== true) {
+        cardMeshes.push(child);
+      }
+    });
+  });
+
+  const intersects = raycaster.intersectObjects(cardMeshes, false);
+  if (intersects.length > 0) {
+    // Encontrar a qué carta pertenece este mesh
+    let hit = intersects[0].object;
+    while (hit.parent && !hit.parent.userData.isCard) {
+      hit = hit.parent;
+    }
+    if (hit.parent && hit.parent.userData.isCard) {
+      return hit.parent;
+    }
+  }
+  return null;
+}
+
+// ── ¿Click está sobre la mesa (suelo)? ──
+function getTableIntersect(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(pointer, camera);
+  
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -tableSurfaceY);
+  const intersect = new THREE.Vector3();
+  const ray = raycaster.ray;
+  
+  if (ray.intersectPlane(plane, intersect)) {
+    return intersect;
+  }
+  return null;
+}
+
+// ── Eventos ──
+
+// Mousedown: seleccionar carta o empezar drag
+renderer.domElement.addEventListener('pointerdown', (event) => {
+  if (event.button !== 0) return; // solo click izquierdo
+  
+  const carta = getCardUnderPointer(event);
+  if (carta) {
+    selectedCard = carta;
+    isDragging = false;
+    
+    // Desactivar controles de órbita
+    controls.enabled = false;
+    
+    // Levantar la carta
+    carta.position.y += CARD_LIFT;
+    
+    // Agrandar sombra
+    const shadow = carta.userData.shadow;
+    if (shadow) {
+      shadow.material.opacity = 0.35;
+      shadow.scale.set(1.3, 1.3, 1);
+    }
+    
+    // Brillo en la carta seleccionada
+    const body = carta.userData.body;
+    if (body) {
+      body.material.emissive = new THREE.Color(0x444466);
+      body.material.emissiveIntensity = 0.15;
+    }
+    
+    // Calcular offset del drag
+    const intersect = getTableIntersect(event);
+    if (intersect) {
+      dragOffset.copy(carta.position).sub(intersect);
+      dragOffset.y = 0;
+    }
+    
+    // Ocultar el modal de instrucciones
+    document.querySelector('#card-info-modal').classList.remove('show');
+    
+    event.preventDefault();
+  }
+});
+
+// Mousemove: arrastrar carta
+renderer.domElement.addEventListener('pointermove', (event) => {
+  if (!selectedCard) return;
+  
+  const intersect = getTableIntersect(event);
+  if (intersect) {
+    isDragging = true;
+    
+    if (cardMode === 'free') {
+      // Movimiento libre
+      selectedCard.position.x = intersect.x + dragOffset.x;
+      selectedCard.position.z = intersect.z + dragOffset.z;
+      
+      // Pequeña rotación natural al arrastrar
+      selectedCard.rotation.y += (event.movementX * 0.002);
+    } else {
+      // Modo ordenado: solo mover en el eje X (a lo largo de la fila)
+      selectedCard.position.x = Math.max(-0.3, Math.min(0.3, intersect.x + dragOffset.x));
+      selectedCard.position.z = 0;
+    }
+    
+    // Mantener la carta levantada
+    selectedCard.position.y = tableSurfaceY + CARD_LIFT;
+    
+    renderer.domElement.style.cursor = 'grabbing';
+  }
+});
+
+// Mouseup: soltar carta
+renderer.domElement.addEventListener('pointerup', (event) => {
+  if (!selectedCard) return;
+  
+  // Bajar la carta
+  selectedCard.position.y = tableSurfaceY;
+  
+  // Restaurar sombra
+  const shadow = selectedCard.userData.shadow;
+  if (shadow) {
+    shadow.material.opacity = 0.2;
+    shadow.scale.set(1, 1, 1);
+  }
+  
+  // Quitar brillo
+  const body = selectedCard.userData.body;
+  if (body) {
+    body.material.emissive = new THREE.Color(0x000000);
+    body.material.emissiveIntensity = 0;
+  }
+  
+  // Guardar posición actual como home (modo libre)
+  if (cardMode === 'free' && isDragging) {
+    selectedCard.userData.homePos = selectedCard.position.clone();
+  }
+  
+  // Reactivar controles
+  controls.enabled = true;
+  
+  // Si no hubo arrastre (fue un click sin mover), mostrar info
+  if (!isDragging) {
+    document.querySelector('#card-info-modal').classList.add('show');
+    setTimeout(() => {
+      document.querySelector('#card-info-modal').classList.remove('show');
+    }, 2000);
+  }
+  
+  selectedCard = null;
+  isDragging = false;
+  renderer.domElement.style.cursor = 'default';
+});
+
+// Prevenir context menu en el canvas
+renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ═══════════════════════════════════════════════
+//  CONTROLES UI
+// ═══════════════════════════════════════════════
+
+// ── Botones de mesas ──
 const btns = document.querySelectorAll('.mesa-btn');
 btns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -173,7 +581,32 @@ btns.forEach(btn => {
   });
 });
 
-// ─── ZOOM ─────────────────────────────────────
+// ── Modo de cartas ──
+const modeBtns = document.querySelectorAll('.card-btn[data-mode]');
+modeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    modeBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cardMode = btn.dataset.mode;
+    
+    if (cardMode === 'ordered') {
+      ordenarCartas();
+    } else {
+      repartirCartas();
+    }
+  });
+});
+
+// ── Repartir ──
+document.querySelector('#reset-cards').addEventListener('click', () => {
+  if (cardMode === 'ordered') {
+    ordenarCartas();
+  } else {
+    repartirCartas();
+  }
+});
+
+// ── Zoom ──
 const slider = document.querySelector('#zoomSlider');
 slider.addEventListener('input', (e) => {
   const dist = parseFloat(e.target.value);
@@ -183,10 +616,15 @@ slider.addEventListener('input', (e) => {
   controls.update();
 });
 
-// ─── CARGA INICIAL ──────────────────────────
-cargarModelo('assets/mesas/mesa_organica_v01.glb');
+// ═══════════════════════════════════════════════
+//  INICIALIZACIÓN
+// ═══════════════════════════════════════════════
 
-// ─── RESIZE ──────────────────────────────────
+cargarModelo('assets/mesas/mesa_organica_v01.glb');
+generarCartasPrueba(5);
+ordenarCartas();
+
+// ── Resize ──
 window.addEventListener('resize', () => {
   const a = window.innerWidth / window.innerHeight;
   camera.aspect = a;
@@ -194,7 +632,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ─── ANIMACIÓN ───────────────────────────────
+// ── Animación ──
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
