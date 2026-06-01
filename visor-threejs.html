@@ -250,8 +250,24 @@ function cargarTexturaDorso(id) {
 
 function anadirDorso(carta) {
   if (!dorsoTexture) return;
-  const cardW = 0.063 * CARD_SCALE;
-  const cardH = 0.088 * CARD_SCALE;
+
+  // Medir el tamaño real de la carta a partir de sus mallas (excluyendo sombra)
+  const box = new THREE.Box3();
+  carta.traverse(c => { if (c.isMesh && !c.userData.isShadow && !c.userData.isDorso) box.expandByObject(c); });
+  const size = box.getSize(new THREE.Vector3());
+  let cardW = size.x;
+  let cardH = size.z; // la carta está en XZ (horizontal)
+
+  // Fallback si no se pudo medir (valores originales)
+  if (cardW === 0 || cardH === 0) {
+    cardW = 0.063 * CARD_SCALE;
+    cardH = 0.088 * CARD_SCALE;
+  }
+
+  // Pequeño margen para que el dorso no se vea más pequeño que la carta
+  cardW *= 1.01;
+  cardH *= 1.01;
+
   const dorsoMat = new THREE.MeshStandardMaterial({
     map: dorsoTexture,
     side: THREE.DoubleSide,
@@ -263,7 +279,7 @@ function anadirDorso(carta) {
     dorsoMat
   );
   dorsoPlane.rotation.x = -Math.PI / 2; // horizontal (misma orientación que la carta)
-  dorsoPlane.position.y = -0.00025; // justo debajo de la carta
+  dorsoPlane.position.y = -0.0001; // ligeramente bajo la carta, pegado
   dorsoPlane.userData.isDorso = true;
   carta.add(dorsoPlane);
   carta.userData.dorsoMesh = dorsoPlane;
