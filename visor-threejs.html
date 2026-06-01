@@ -9,9 +9,15 @@
 body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
 
 /* ── UI Panel ── */
-#ui{position:absolute;top:16px;left:16px;color:#fff;background:rgba(10,10,15,0.85);padding:14px 16px;border-radius:12px;font-size:13px;min-width:220px;z-index:10;pointer-events:none;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.06)}
+#ui{position:absolute;top:16px;left:16px;color:#fff;background:rgba(10,10,15,0.85);padding:14px 16px;border-radius:12px;font-size:13px;min-width:220px;z-index:10;pointer-events:none;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.06);transition:all 0.3s ease}
 #ui *{pointer-events:all}
-#ui h2{font-size:13px;margin:0 0 6px;color:#c8b898;letter-spacing:0.5px;font-weight:600}
+#ui h2{font-size:13px;margin:0;color:#c8b898;letter-spacing:0.5px;font-weight:600}
+#ui-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+#ui-body{transition:max-height 0.3s ease;overflow:hidden;max-height:600px}
+#ui.collapsed #ui-body{max-height:0;margin-top:0;pointer-events:none}
+#ui.collapsed{padding:10px 14px;min-width:auto}
+#collapse-btn{cursor:pointer;font-size:14px;color:#6a6458;padding:2px 6px;border-radius:4px;user-select:none;transition:color 0.2s}
+#collapse-btn:hover{color:#c8b898;background:rgba(255,255,255,0.06)}
 
 /* ── Secciones ── */
 .section{font-size:10px;color:#6a6458;margin:10px 0 4px 4px;text-transform:uppercase;letter-spacing:1px}
@@ -86,7 +92,11 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
 <a id=back-link href=index.html>← Volver</a>
 
 <div id=ui>
-  <h2>◈ Visor de Mesas</h2>
+  <div id=ui-header>
+    <h2>◈ Visor de Mesas</h2>
+    <span id=collapse-btn title="Plegar / desplegar panel">➖</span>
+  </div>
+  <div id=ui-body>
 
   <div class=section>🪵 Modelo</div>
   <button class="mesa-btn active" data-model="assets/mesas/mesa_organica_v01.glb">V1 · Detallada <span class=size>69 KB</span></button>
@@ -150,6 +160,7 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
   <div class=section style="margin-top:12px">🔍 Zoom</div>
   <input type=range id=zoomSlider min=0.5 max=8 step=0.1 value=2.5>
   <div class=zoom-labels><span>3D</span><span>▼ cenital</span></div>
+</div>
 </div>
 
 <div id=status><span class=ok>●</span> Mesa limpia</div>
@@ -251,8 +262,8 @@ function anadirDorso(carta) {
     new THREE.PlaneGeometry(cardW, cardH),
     dorsoMat
   );
-  dorsoPlane.position.z = -0.0002; // justo detrás de la cara
-  dorsoPlane.rotation.y = Math.PI; // mirando hacia atrás
+  dorsoPlane.rotation.x = -Math.PI / 2; // horizontal (misma orientación que la carta)
+  dorsoPlane.position.y = -0.00025; // justo debajo de la carta
   dorsoPlane.userData.isDorso = true;
   carta.add(dorsoPlane);
   carta.userData.dorsoMesh = dorsoPlane;
@@ -817,6 +828,13 @@ document.addEventListener('keydown', (e) => {
 // ═══════════════════════════════════════════════
 //  CONTROLES UI
 // ═══════════════════════════════════════════════
+
+// ── Botón colapsar UI ──
+document.querySelector('#collapse-btn').addEventListener('click', () => {
+  document.querySelector('#ui').classList.toggle('collapsed');
+  const btn = document.querySelector('#collapse-btn');
+  btn.textContent = document.querySelector('#ui').classList.contains('collapsed') ? '➕' : '➖';
+});
 
 // ── Botones de bloqueo ──
 document.querySelectorAll('.lock-btn[data-lock]').forEach(btn => {
