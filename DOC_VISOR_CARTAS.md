@@ -1,84 +1,82 @@
 # 🃏 Visor Three.js — Documentación para Zet & Zeta
 
-> **Fecha:** 1 de junio (v3) | **Proyecto:** sysneria-3d-viewer  
-> **Archivo principal:** `02_VISOR_WEB/visor-threejs.html`
+> **Fecha:** 1 de junio (v4.1) | **Proyecto:** sysneria-3d-viewer  
+> **Archivo principal:** `02_VISOR_WEB/visor-threejs.html`  
+> **Commits recientes:** `6b937f2` (cartas Zet en visor), `b209a01` (fix rotación carta)
 
 ---
 
-## 📐 Estado actual del visor (v3 — modular)
+## 🔧 Últimos cambios (v4.1 — 1 junio)
 
-### Lo que funciona
-- **Selector de mesa** con 6 modelos de Zet
-- **Cámara orbit + zoom** fluido 3D↔cenital
-- **Iluminación** con 3 luces y sombras
-- **Sistema de capas independientes:**
-  - ✅ **Mesa** — siempre visible, cambia al seleccionar modelo
-  - ✅ **Tapete** — activable/desactivable con toggle
-  - ✅ **Cartas** (5 de prueba) — activable/desactivable con toggle
-- **Arrastre de cartas** en modo Ordenado (fila) y Libre (aleatorio)
+- `index.html` → **redirige automáticamente** a `visor-threejs.html` (meta refresh 0s)
+- `iniciar.bat` → ahora **detecta si el puerto 8080 ya está ocupado** y no duplica el servidor
+- Servidor actual activo (PID 14788) — **NO arrancar otro sin verificar antes**
+
+---
+
+## 📐 Estado actual (v4 — cartas de Zet en el visor)
+
+### ✅ Lo que funciona
+- **Selector de mesa** con 6 modelos (V1 detallada, V2/V3 Zet, V3+carta, rectangulares)
+- **Cámara orbit + zoom** 3D↔cenital
+- **Sistema de capas modulares:**
+  - ✅ Mesa — siempre visible, cambia al seleccionar
+  - ✅ Tapete — toggle on/off (mesh verde independiente)
+  - ✅ Cartas de Zet — toggle on/off (3 GLBs con textura real)
+- **Arrastre de cartas** en modo Ordenado (fila) y Libre (arrastre + rotación)
 - **Al cambiar de mesa** → tapete y cartas se limpian automáticamente
 
-### Lo que pendiente de Zet
-- [ ] **V2 y V3** — revisar grosor inferior (se ven planas por abajo)
-- [ ] **Diseños independientes** — que mesa, tapete y cartas sean objetos separados en los blends (ahora el tapete viene incrustado en el modelo)
+### 🃏 Cartas de Zet integradas
+| Baraja | Cartas | Estado |
+|--------|--------|--------|
+| Poker Normal | 52 (A,2-10,J,Q,K ♠♥♦♣) | ✅ 1 GLB de prueba (As ♥) |
+| Poker Cartoon | 52 (estilo caricatura) | ✅ 1 GLB de prueba (As ♥) |
+| Española 40 | 40 (As-7, Sota, Caballo, Rey) | ✅ Texturas listas (1-7 + 10-12) |
+| Española 48 | 48 (As-9, Sota, Caballo, Rey) | ✅ Texturas listas (1-12) |
 
-### Problema conocido
-- **Tapete duplicado** al activar: el modelo de Zet ya trae un tapete incrustado, y mi toggle añade otro encima. Se soluciona cuando Zet saque los modelos con el tapete como pieza independiente.
+### 📦 Assets
+
+| Carpeta | Contenido | Peso |
+|---------|-----------|------|
+| `assets/texturas_cartas/espanola_40/` | 48 PNGs (1-12 × 4 palos) | ~18 MB |
+| `assets/texturas_cartas/poker_52/` | 52 PNGs (poker normal) | ~18 MB |
+| `assets/texturas_cartas/poker_52/Cartoon/` | 52 PNGs (poker cartoon) | ~18 MB |
+| `assets/carta_poker_normal.glb` | As ♥ con textura | 29 KB |
+| `assets/carta_poker_cartoon.glb` | As ♥ cartoon con textura | 29 KB |
+| `assets/carta_espanola.glb` | As Bastos con textura | 29 KB |
 
 ---
 
-## 🏗️ Arquitectura actual
+## 🏗️ Arquitectura modular (capas independientes)
 
 ```
 VISOR (visor-threejs.html)
 ├── 🌐 ESCENA BASE (luces, suelo, cámara)
-├── 🪵 MESA ── selector de modelo ── toggle (fijo)
-├── 🟫 TAPETE ── toggle ── mesh verde independiente
-├── 🃏 CARTAS ── toggle ── 5 cartas arrastrables
+├── 🪵 MESA ── selector de modelo ── toggle fijo
+├── 🟫 TAPETE ── toggle ── mesh independiente (no del GLB)
+├── 🃏 CARTAS ── toggle ── carga GLBs de Zet
 │   ├── 🎯 Modo Ordenado (fila en X)
-│   └── 🖐️ Modo Libre (arrastre + rotación)
+│   └── 🖐️ Modo Libre (arrastre + rotación libre)
 └── 🔍 Zoom slider
 ```
 
----
-
-## 📊 Assets actuales
-
-| Archivo | Peso | Nota |
-|---------|------|------|
-| `mesa_organica_v01.glb` | 69 KB | ✅ Detallada, correcta |
-| `mesa_organica_v02.glb` | 16 KB | ⏳ Zet revisará grosor |
-| `mesa_organica_v03.glb` | 16 KB | ⏳ Zet revisará grosor |
-| `mesa_v3_con_carta.glb` | 21 KB | ⏳ Tiene carta incrustada |
-| `mesa_rectangular_v01.glb` | 25 KB | ✅ |
-| `mesa_rectangular_v02.glb` | 25 KB | ✅ |
-| `mesa_referencia.glb` | 12 KB | Referencia colores |
+**Regla importante:** Cada capa es independiente. Activar cartas NO activa tapete.
+Al cambiar de mesa, todas las capas secundarias se resetean.
 
 ---
 
-## 🧩 Próximos pasos (cuando Zet termine)
+## 🧩 Próximos pasos
 
-1. Zet entrega modelos **independientes** (mesa aparte, tapete aparte, cartas aparte)
-2. Reemplazar cartas de prueba por las de Zet
-3. Ajustar tapete si Zet lo prefiere con textura
-4. Visor ya está preparado para recibirlos — solo sustituir assets
-
----
-
-## 🐛 Bugs conocidos
-
-- [x] ~~Cartas siempre visibles al cargar~~ → **Arreglado** (ahora son toggle)
-- [x] ~~Tapete no existía~~ → **Arreglado** (toggle funcional)
-- [ ] Tapete duplicado (el de Zet incrustado + el mío) — se arregla cuando Zet separe los diseños
-- [ ] V2/V3 base plana — Zet lo revisa
+1. **Selector de baraja** — poder elegir qué baraja se carga (Poker / Cartoon / Española 40 / Española 48)
+2. **Más cartas** — exportar más GLBs de Zet para tener manos completos
+3. **Dorso de carta** — cuando Zet lo diseñe
+4. **V2/V3 orgánicas** — Zet revisa grosor inferior
 
 ---
 
 ## 🔗 Links
-
 - **GitHub:** https://github.com/atezeta69-create/sysneria-3d-viewer
-- **Drive:** `/g/Mi unidad/SysNerIA/Blender 3D/SysNerIA_Zet/DISENO_MESAS/`
-- **Commits recientes:**
-  - `3dfbff4` — Refactor modular (capas independientes)
-  - `bc8fa31` — Sistema de cartas interactivas
-  - `e878bb8` — V2/V3 exportados de blends Zet
+- **Drive texturas:** `Materiales_compartidos_por_Zeta/imágenes_cartas/`
+- **Drive diseños Zet:** `SysNerIA_Zet/DISENO_MESAS/`
+- **Drive cartas Zet:** `SysNerIA_Zet/CARTAS_INDIVIDUALES/`
+- **Diario Zet:** `SysNerIA_Zet/DIARIO_SYSNERIA_ZET.md`
