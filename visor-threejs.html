@@ -39,6 +39,13 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
 .lock-row{display:flex;align-items:center;gap:4px;margin:4px 0 2px 8px;font-size:11px;color:#6a6458}
 .lock-label{margin-right:8px}
 
+/* ── Selector de dorsos ── */
+.dorso-select{display:flex;gap:3px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
+.dorso-select.active{opacity:1;pointer-events:all}
+.dorso-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:2px 7px;border-radius:6px;cursor:pointer;font-size:9px;font-family:inherit;transition:all 0.15s}
+.dorso-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
+.dorso-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
+
 /* ── Selector de baraja ── */
 .deck-select{display:flex;gap:4px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
 .deck-select.active{opacity:1;pointer-events:all}
@@ -122,6 +129,17 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
     <button class="deck-btn" data-deck="espanola">🇪🇸 Española</button>
   </div>
 
+  <div class="dorso-select" id="dorso-options">
+    <button class="dorso-btn active" data-dorso="base">🎴 Base</button>
+    <button class="dorso-btn" data-dorso="medieval">🏰 Medieval</button>
+    <button class="dorso-btn" data-dorso="vintage_001">📜 Vintage</button>
+    <button class="dorso-btn" data-dorso="tecno_futurisca">🤖 Tecno</button>
+    <button class="dorso-btn" data-dorso="esoterico">🔮 Esotérico</button>
+    <button class="dorso-btn" data-dorso="lumen">✨ Lumen</button>
+    <button class="dorso-btn" data-dorso="cartoon_01">😄 Cartoon</button>
+    <button class="dorso-btn" data-dorso="vintage_002">📜 Vintage 2</button>
+  </div>
+
   <div class="mode-select" id="card-options">
     <button class="mode-btn active" data-mode="fan">🃏 Abanico</button>
     <button class="mode-btn" data-mode="row">📏 Fila</button>
@@ -179,10 +197,69 @@ const DECKS = {
 };
 
 const TAPETES = ['Verde', 'Rojo', 'Azul', 'Amarillo'];
+
+const DORSOS = [
+  { id: 'base',         label: '🎴 Base' },
+  { id: 'medieval',     label: '🏰 Medieval' },
+  { id: 'vintage_001',  label: '📜 Vintage' },
+  { id: 'tecno_futurisca', label: '🤖 Tecno' },
+  { id: 'esoterico',    label: '🔮 Esotérico' },
+  { id: 'lumen',        label: '✨ Lumen' },
+  { id: 'cartoon_01',   label: '😄 Cartoon' },
+  { id: 'vintage_002',  label: '📜 Vintage 2' },
+];
+
+let currentDorso = 'base';
+const dorsoTextureLoader = new THREE.TextureLoader();
+let dorsoTexture = null; // textura del dorso actual
 const CARD_SCALE = 0.8;
 const CARD_LIFT = 0.015;
 const TAPETE_THICKNESS = 0.003; // grosor del tapete (~3mm)
 const CARD_OFFSET = TAPETE_THICKNESS / 2 + 0.001; // cartas justo encima del tapete
+
+// ═══════════════════════════════════════════════
+//  DORSO (textura trasera de las cartas)
+// ═══════════════════════════════════════════════
+
+function cargarTexturaDorso(id) {
+  currentDorso = id;
+  const url = `assets/cartas/dorsos/dorso_zeta_${id}.png`;
+  dorsoTextureLoader.load(url, (tex) => {
+    dorsoTexture = tex;
+    dorsoTexture.colorSpace = THREE.SRGBColorSpace;
+    // Actualizar todas las cartas existentes
+    cartas.forEach(c => {
+      if (c.userData.dorsoMesh) {
+        c.userData.dorsoMesh.material.map = tex;
+        c.userData.dorsoMesh.material.needsUpdate = true;
+      }
+    });
+  });
+}
+
+function anadirDorso(carta) {
+  if (!dorsoTexture) return;
+  const cardW = 0.063 * CARD_SCALE;
+  const cardH = 0.088 * CARD_SCALE;
+  const dorsoMat = new THREE.MeshStandardMaterial({
+    map: dorsoTexture,
+    side: THREE.DoubleSide,
+    roughness: 0.7,
+    metalness: 0,
+  });
+  const dorsoPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(cardW, cardH),
+    dorsoMat
+  );
+  dorsoPlane.position.z = -0.0002; // justo detrás de la cara
+  dorsoPlane.rotation.y = Math.PI; // mirando hacia atrás
+  dorsoPlane.userData.isDorso = true;
+  carta.add(dorsoPlane);
+  carta.userData.dorsoMesh = dorsoPlane;
+}
+
+// Cargar textura de dorso por defecto al inicio
+cargarTexturaDorso('base');
 
 // ═══════════════════════════════════════════════
 //  ESCENA BASE
@@ -422,6 +499,9 @@ function cargarBaraja(deckKey) {
       shadow.userData.isShadow = true;
       m.add(shadow);
       m.userData.shadow = shadow;
+
+      // Añadir dorso (plano con textura detrás de la carta)
+      anadirDorso(m);
 
       cartas.push(m);
       loaded++;
@@ -718,7 +798,14 @@ document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   
   let rot = 0;
-  if (e.key === 'r' || e.key === 'R') rot = e.shiftKey ? -0.26 : 0.26; // ~15°
+  if (e.key === 'r' || e.key === 'R') rot = e.shiftKey ? -0.26 : 0.26; // ~15° spin Y
+  
+  // Flip en X (cara ↔ dorso)
+  if (e.key === 'f' || e.key === 'F') {
+    selectedCard.rotation.x += Math.PI;
+    if (highlightLines) highlightLines.rotation.x = selectedCard.rotation.x;
+    e.preventDefault();
+  }
   
   if (rot !== 0) {
     selectedCard.rotation.y += rot;
@@ -789,6 +876,7 @@ document.querySelectorAll('.toggle-row').forEach(row => {
     // Mostrar opciones contextuales
     document.querySelector('#tapete-options').classList.toggle('active', layer === 'tapete' && show);
     document.querySelector('#deck-options').classList.toggle('active', layer === 'cartas' && show);
+    document.querySelector('#dorso-options').classList.toggle('active', layer === 'cartas' && show);
     document.querySelector('#card-options').classList.toggle('active', layer === 'cartas' && show);
   });
 });
@@ -805,6 +893,15 @@ document.querySelectorAll('.deck-btn[data-deck]').forEach(btn => {
     } else {
       currentDeck = newDeck;
     }
+  });
+});
+
+// ── Selector de dorso ──
+document.querySelectorAll('.dorso-btn[data-dorso]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dorso-btn[data-dorso]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cargarTexturaDorso(btn.dataset.dorso);
   });
 });
 
