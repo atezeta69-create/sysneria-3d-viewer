@@ -32,10 +32,12 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
 .toggle-switch.on::after{left:16px;background:#c8b898}
 
 /* ── Botón de bloqueo ── */
-.lock-btn{font-size:12px;cursor:pointer;margin-left:auto;opacity:0.5;transition:opacity 0.2s;padding:2px 4px;border-radius:4px;user-select:none}
+.lock-btn{font-size:14px;cursor:pointer;opacity:0.5;transition:opacity 0.2s;padding:2px 6px;border-radius:4px;user-select:none;display:inline-block}
 .lock-btn:hover{opacity:1;background:rgba(255,255,255,0.06)}
 .lock-btn.locked{opacity:1}
 .lock-btn.locked:hover{background:rgba(255,100,100,0.1)}
+.lock-row{display:flex;align-items:center;gap:4px;margin:4px 0 2px 8px;font-size:11px;color:#6a6458}
+.lock-label{margin-right:8px}
 
 /* ── Selector de baraja ── */
 .deck-select{display:flex;gap:4px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
@@ -94,11 +96,17 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
   </div>
   <div class="toggle-row" data-layer="tapete">
     <span class="toggle-switch"></span> Tapete
-    <span class="lock-btn" data-lock="tapete" title="Bloquear / desbloquear">🔓</span>
   </div>
   <div class="toggle-row" data-layer="cartas">
     <span class="toggle-switch"></span> Cartas
-    <span class="lock-btn" data-lock="cartas" title="Bloquear / desbloquear">🔓</span>
+  </div>
+
+  <div class="section" style="margin-top:2px">🔒 Bloquear</div>
+  <div class="lock-row">
+    <span class="lock-btn" data-lock="tapete" title="Bloquear tapete">🔓</span>
+    <span class="lock-label">Tapete</span>
+    <span class="lock-btn" data-lock="cartas" title="Bloquear cartas">🔓</span>
+    <span class="lock-label">Cartas</span>
   </div>
 
   <div class="tapete-select" id="tapete-options">
@@ -443,11 +451,21 @@ function posicionarCartas(mode) {
   if (n === 0) return;
 
   if (mode === 'row') {
-    // Fila ordenada
-    const spacing = 0.045 * CARD_SCALE;
-    const startX = -(n - 1) * spacing / 2;
+    // 4 filas de N cartas cada una (N=13 para poker, 12 para espanola)
+    const cardsPerRow = Math.ceil(n / 4);
+    const spacingX = 0.045 * CARD_SCALE;
+    const spacingZ = 0.065 * CARD_SCALE;
+    const rowWidth = (cardsPerRow - 1) * spacingX;
+    const rowHeight = 3 * spacingZ;
+    
     cartas.forEach((c, i) => {
-      c.position.set(startX + i * spacing, tableSurfaceY + CARD_OFFSET, 0);
+      const row = Math.floor(i / cardsPerRow);
+      const col = i % cardsPerRow;
+      c.position.set(
+        col * spacingX - rowWidth / 2,
+        tableSurfaceY + CARD_OFFSET,
+        row * spacingZ - rowHeight / 2
+      );
       c.rotation.set(0, 0, 0);
     });
   } else if (mode === 'fan') {
@@ -557,12 +575,14 @@ function clearSelection() {
   if (highlightLines && highlightLines.parent) scene.remove(highlightLines);
   highlightLines = null;
   selectedCard = null;
+  controls.enableZoom = true;
 }
 
 function selectCard(carta) {
   clearSelection();
   if (!carta) return;
   selectedCard = carta;
+  controls.enableZoom = false; // evitar que la rueda también haga zoom
   
   // Crear borde de selección (outline)
   const box = new THREE.Box3().setFromObject(carta);
