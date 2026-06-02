@@ -1284,7 +1284,7 @@ function animate() {
     const camDir = new THREE.Vector3();
     camera.getWorldDirection(camDir);
     const azimuth = Math.atan2(camDir.x, camDir.z);
-    cursorGroup.rotation.y = azimuth - Math.PI / 2;
+    cursorGroup.rotation.y = azimuth + Math.PI / 2;
   }
   
   controls.update();
