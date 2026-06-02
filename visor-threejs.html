@@ -156,6 +156,9 @@ canvas{cursor:none!important}
     <button class="mode-btn" id="reset-cards">⟲ Repartir</button>
   </div>
 
+  <!-- Boton voltear carta (oculto por defecto, aparece al seleccionar) -->
+  <button id="flip-btn" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;margin:6px 0 0 8px;transition:all 0.2s" title="Voltear carta (doble tap, clic derecho o tecla F)">↻ Voltear</button>
+
   <div class=section style="margin-top:12px">🔍 Zoom</div>
   <input type=range id=zoomSlider min=0.5 max=8 step=0.1 value=2.5>
   <div class=zoom-labels><span>3D</span><span>▼ cenital</span></div>
@@ -873,6 +876,13 @@ function getTableIntersect(event) {
 //  INTERACCIÓN: CLICK / ARRASTRE / SELECCIÓN
 // ═══════════════════════════════════════════════
 
+// ── Voltear carta (compartido: boton, doble tap, click derecho, tecla F) ──
+function flipCard() {
+  if (!selectedCard) return;
+  selectedCard.rotation.x += Math.PI;
+  if (highlightLines) highlightLines.rotation.x = selectedCard.rotation.x;
+}
+
 function clearSelection() {
   if (highlightLines && highlightLines.parent) scene.remove(highlightLines);
   if (tapeteHighlight && tapeteHighlight.parent) scene.remove(tapeteHighlight);
@@ -881,6 +891,7 @@ function clearSelection() {
   selectedCard = null;
   selectedTapete = null;
   controls.enableZoom = true;
+  document.querySelector('#flip-btn').style.display = 'none';
 }
 
 function selectCard(carta) {
@@ -903,6 +914,7 @@ function selectCard(carta) {
   highlightLines.position.copy(carta.position);
   highlightLines.position.y += 0.001;
   scene.add(highlightLines);
+  document.querySelector('#flip-btn').style.display = 'inline-block';
 }
 
 function selectTapete(tapete) {
@@ -1055,10 +1067,7 @@ renderer.domElement.addEventListener('wheel', (e) => {
 // ── Click derecho: flip de carta seleccionada ──
 renderer.domElement.addEventListener('contextmenu', (e) => {
   e.preventDefault();
-  if (selectedCard) {
-    selectedCard.rotation.x += Math.PI;
-    if (highlightLines) highlightLines.rotation.x = selectedCard.rotation.x;
-  }
+  flipCard();
 });
 
 // ── Atajos de teclado ──
@@ -1087,8 +1096,7 @@ document.addEventListener('keydown', (e) => {
 
   // F: flip de carta seleccionada
   if ((e.key === 'f' || e.key === 'F') && selectedCard) {
-    selectedCard.rotation.x += Math.PI;
-    if (highlightLines) highlightLines.rotation.x = selectedCard.rotation.x;
+    flipCard();
     e.preventDefault();
   }
 });
@@ -1230,6 +1238,26 @@ document.querySelector('#reset-cards').addEventListener('click', () => {
   if (layers.cartas.visible) {
     posicionarCartas(cardMode);
   }
+});
+
+// ── Boton Voltear carta ──
+document.querySelector('#flip-btn').addEventListener('click', flipCard);
+
+// ── Doble tap en el canvas para voltear carta seleccionada ──
+let lastTapTime = 0;
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!selectedCard || e.button !== 0) return;
+  const now = performance.now();
+  if (now - lastTapTime < 400 && now - lastTapTime > 50) {
+    // Doble tap detectado
+    const obj = getDraggableUnderPointer(e);
+    if (obj === selectedCard) {
+      flipCard();
+      lastTapTime = 0; // reset para evitar triple-tap
+      return;
+    }
+  }
+  lastTapTime = now;
 });
 
 // ── Zoom ──
