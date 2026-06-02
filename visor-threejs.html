@@ -157,7 +157,11 @@ canvas{cursor:none!important}
   </div>
 
   <!-- Boton voltear carta (oculto por defecto, aparece al seleccionar) -->
-  <button id="flip-btn" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;margin:6px 0 0 8px;transition:all 0.2s" title="Voltear carta (doble tap, clic derecho o tecla F)">↻ Voltear</button>
+  <div id="card-actions" style="display:none;margin:6px 0 0 8px;display:none;gap:4px">
+    <button id="flip-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Voltear carta (doble tap o clic derecho)">↻ Voltear</button>
+    <button id="rot-left-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Girar izquierda (R en teclado)">↺</button>
+    <button id="rot-right-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Girar derecha (Shift+R en teclado)">↻</button>
+  </div>
 
   <div class=section style="margin-top:12px">🔍 Zoom</div>
   <input type=range id=zoomSlider min=0.5 max=8 step=0.1 value=2.5>
@@ -891,7 +895,7 @@ function clearSelection() {
   selectedCard = null;
   selectedTapete = null;
   controls.enableZoom = true;
-  document.querySelector('#flip-btn').style.display = 'none';
+  document.querySelector('#card-actions').style.display = 'none';
 }
 
 function selectCard(carta) {
@@ -914,7 +918,7 @@ function selectCard(carta) {
   highlightLines.position.copy(carta.position);
   highlightLines.position.y += 0.001;
   scene.add(highlightLines);
-  document.querySelector('#flip-btn').style.display = 'inline-block';
+  document.querySelector('#card-actions').style.display = 'flex';
 }
 
 function selectTapete(tapete) {
@@ -1242,6 +1246,18 @@ document.querySelector('#reset-cards').addEventListener('click', () => {
 
 // ── Boton Voltear carta ──
 document.querySelector('#flip-btn').addEventListener('click', flipCard);
+
+// ── Botones de giro ──
+document.querySelector('#rot-left-btn').addEventListener('click', () => {
+  if (!selectedCard) return;
+  selectedCard.rotation.y -= 0.26;
+  if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
+});
+document.querySelector('#rot-right-btn').addEventListener('click', () => {
+  if (!selectedCard) return;
+  selectedCard.rotation.y += 0.26;
+  if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
+});
 
 // ── Doble tap en el canvas para voltear carta seleccionada ──
 let lastTapTime = 0;
