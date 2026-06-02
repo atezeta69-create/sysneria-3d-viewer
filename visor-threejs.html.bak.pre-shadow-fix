@@ -6,9 +6,7 @@
 <title>Visor Three.js — Mesas 🃏</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif;cursor:default}
-/* Cursor mano: ocultar cursor nativo sobre el canvas */
-canvas{cursor:none!important}
+body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
 
 /* ── UI Panel ── */
 #ui{position:absolute;top:16px;left:16px;color:#fff;background:rgba(10,10,15,0.85);padding:14px 16px;border-radius:12px;font-size:13px;min-width:220px;z-index:10;pointer-events:none;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.06);transition:all 0.3s ease}
@@ -376,8 +374,6 @@ dl.position.set(3, 6, 4);
 dl.castShadow = true;
 dl.shadow.mapSize.width = 1024;
 dl.shadow.mapSize.height = 1024;
-dl.shadow.bias = -0.0005;
-dl.shadow.normalBias = 0.02;
 scene.add(dl);
 const fl = new THREE.DirectionalLight(0x8888ff, 0.6);
 fl.position.set(-2, 3, -3);
@@ -386,147 +382,7 @@ const rim = new THREE.DirectionalLight(0xffdd99, 0.3);
 rim.position.set(-1, 1, 4);
 scene.add(rim);
 
-// ── CURSOR 3D (mano que sigue al ratón) ──
-const CURSOR_ENABLED = true;
-let cursorState = 'reposo';
-const cursorModels = {};
-let cursorModelsLoaded = 0;
-let cursorMouseScreen = new THREE.Vector2();
-let cursorTargetPos = new THREE.Vector3();
-let cursorSmoothPos = new THREE.Vector3();
-const cursorGroup = new THREE.Group();
-cursorGroup.visible = false;
-scene.add(cursorGroup);
-
-// Crossfade state
-let cursorFading = false;
-let cursorFadeStart = 0;
-let cursorFadeDuration = 150;
-let cursorFadeFrom = null;
-let cursorFadeTo = null;
-let cursorFadeFromKey = '';
-let cursorFadeToKey = '';
-let cursorPendingState = '';
-
-function setCursorVisible(key, visible) {
-  const obj = cursorModels[key];
-  if (!obj) return;
-  obj.visible = true;
-  obj.traverse(c => { if (c.isMesh) c.material.opacity = visible ? 1 : 0; });
-}
-
-function cursorCrossfade(fromKey, toKey, duration) {
-  cursorFading = true;
-  cursorFadeStart = performance.now();
-  cursorFadeDuration = duration || 150;
-  cursorFadeFromKey = fromKey;
-  cursorFadeToKey = toKey;
-  cursorFadeFrom = cursorModels[fromKey];
-  cursorFadeTo = cursorModels[toKey];
-  if (cursorFadeFrom) cursorFadeFrom.visible = true;
-  if (cursorFadeTo) cursorFadeTo.visible = true;
-}
-
-function updateCursorFade() {
-  if (!cursorFading) return;
-  const elapsed = performance.now() - cursorFadeStart;
-  const t = Math.min(elapsed / cursorFadeDuration, 1);
-  const eased = 1 - Math.pow(1 - t, 2);
-  
-  if (cursorFadeFrom) cursorFadeFrom.traverse(c => { if (c.isMesh) c.material.opacity = 1 - eased; });
-  if (cursorFadeTo) cursorFadeTo.traverse(c => { if (c.isMesh) c.material.opacity = eased; });
-  
-  if (t >= 1) {
-    cursorFading = false;
-    if (cursorFadeFrom) cursorFadeFrom.traverse(c => { if (c.isMesh) c.material.opacity = 0; });
-    if (cursorPendingState) {
-      const next = cursorPendingState;
-      cursorPendingState = '';
-      enterCursorState(next);
-    }
-  }
-}
-
-function enterCursorState(newState) {
-  cursorState = newState;
-  switch (newState) {
-    case 'reposo':
-      Object.keys(cursorModels).forEach(k => setCursorVisible(k, k === 'mano_abierta'));
-      break;
-    case 'abriendo':
-      cursorCrossfade('mano_abierta', 'dedos_sep', 150);
-      cursorPendingState = 'cerrando';
-      break;
-    case 'cerrando':
-      cursorCrossfade('dedos_sep', 'punio', 150);
-      cursorPendingState = 'agarrado';
-      break;
-    case 'agarrado':
-      Object.keys(cursorModels).forEach(k => setCursorVisible(k, k === 'punio'));
-      break;
-    case 'soltando':
-      cursorCrossfade('punio', 'dedos_sep', 150);
-      cursorPendingState = 'volviendo';
-      break;
-    case 'volviendo':
-      cursorCrossfade('dedos_sep', 'mano_abierta', 150);
-      cursorPendingState = 'reposo';
-      break;
-  }
-}
-
-function startGrabCursor() { if (cursorState === 'reposo') enterCursorState('abriendo'); }
-function startReleaseCursor() { if (cursorState === 'agarrado') enterCursorState('soltando'); }
-
-// Escala y orientación de la mano
-const CURSOR_SCALE = 1.2;
-const CURSOR_HEIGHT_OFFSET = 0.02;
-cursorGroup.scale.set(CURSOR_SCALE, CURSOR_SCALE, CURSOR_SCALE);
-// Mano tumbada sobre la mesa (palma hacia abajo)
-cursorGroup.rotation.x = -Math.PI / 2;
-
-// Seguimiento del ratón (screen coords para proyectar en el plano de la mesa)
-let cursorLastClientX = 0;
-let cursorLastClientY = 0;
-
-// Cargar modelos del cursor
-(function loadCursorModels() {
-  const cl = new GLTFLoader();
-  const models = [
-    { key: 'mano_abierta', url: 'assets/cursor/cursor_mano_abierta.glb' },
-    { key: 'dedos_sep',   url: 'assets/cursor/cursor_dedos_sep.glb' },
-    { key: 'punio',       url: 'assets/cursor/cursor_puño.glb' }
-  ];
-  let loaded = 0;
-  models.forEach(m => {
-    cl.load(m.url, (gltf) => {
-      const obj = gltf.scene;
-      obj.traverse(c => {
-        if (c.isMesh) {
-          c.castShadow = false;
-          c.receiveShadow = false;
-          c.material.transparent = true;
-          c.material.depthWrite = false;
-          c.renderOrder = 999;
-          c.material.opacity = 0;
-          // Color piel claro
-          if (c.material.color) c.material.color.setHex(0xf0d5b8);
-        }
-      });
-      cursorGroup.add(obj);
-      cursorModels[m.key] = obj;
-      loaded++;
-      if (loaded === models.length) {
-        setCursorVisible('mano_abierta', true);
-        cursorGroup.visible = true;
-        console.log('🖐️ Cursor mano cargado');
-      }
-    }, undefined, (err) => {
-      console.error('Error cargando cursor:', m.key, err);
-      loaded++;
-    });
-  });
-})();
+// ── SUELO ──
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(6, 6),
   new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.9, metalness: 0 })
@@ -945,7 +801,6 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
     const s = obj.userData.shadow;
     if (s) { s.material.opacity = 0.4; s.scale.set(1.3, 1.3, 1); }
     renderer.domElement.style.cursor = 'grabbing';
-    startGrabCursor();
   } else if (obj.userData.isTapete) {
     // Tapete: seleccionar primero, arrastrar solo si mueve
     selectTapete(obj);
@@ -959,10 +814,6 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
 });
 
 renderer.domElement.addEventListener('pointermove', (e) => {
-  // Actualizar posición del cursor 3D
-  cursorLastClientX = e.clientX;
-  cursorLastClientY = e.clientY;
-  
   // Cursor hover
   if (!selectedObject && !isPointerDown) {
     const obj = getDraggableUnderPointer(e);
@@ -1032,7 +883,6 @@ renderer.domElement.addEventListener('pointerup', () => {
   selectedObject = null;
   isDragging = false;
   renderer.domElement.style.cursor = 'default';
-  startReleaseCursor();
 });
 
 // ── Rueda del ratón: rotar carta o tapete seleccionado ──
@@ -1256,29 +1106,6 @@ window.addEventListener('resize', () => {
 
 function animate() {
   requestAnimationFrame(animate);
-  
-  // Cursor 3D: seguir al ratón sobre la mesa
-  if (CURSOR_ENABLED && cursorGroup.visible && cursorModels.mano_abierta) {
-    // Proyectar ratón en el plano de la mesa
-    const rect = renderer.domElement.getBoundingClientRect();
-    pointer.x = ((cursorLastClientX || rect.left + rect.width/2) - rect.left) / rect.width * 2 - 1;
-    pointer.y = -((cursorLastClientY || rect.top + rect.height/2) - rect.top) / rect.height * 2 + 1;
-    raycaster.setFromCamera(pointer, camera);
-    
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -tableSurfaceY);
-    const pt = new THREE.Vector3();
-    if (raycaster.ray.intersectPlane(plane, pt)) {
-      // Lerp suave
-      cursorSmoothPos.lerp(pt, 0.25);
-      cursorGroup.position.x = cursorSmoothPos.x;
-      cursorGroup.position.z = cursorSmoothPos.z;
-      cursorGroup.position.y = tableSurfaceY + CURSOR_HEIGHT_OFFSET;
-    }
-    
-    // Actualizar crossfade
-    updateCursorFade();
-  }
-  
   controls.update();
   renderer.render(scene, camera);
 }
