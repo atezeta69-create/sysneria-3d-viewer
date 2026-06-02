@@ -1,41 +1,81 @@
-# 🃏 Visor Three.js — Documentación para Zet & Zeta
+# 🃏 Visor Three.js — Documentación técnica
 
-> **Fecha:** 1 de junio (v5) | **Proyecto:** sysneria-3d-viewer  
+> **Fecha:** 2 de junio de 2026 (v6)  
 > **Archivo principal:** `02_VISOR_WEB/visor-threejs.html`  
-> **Commits recientes:** `v5-cartas-individuales` (cartas individuales, tapetes GLB)
+> **Arquitectura:** Capas independientes + Launcher minimalista
 
 ---
 
-## 🔧 Últimos cambios (v5 — 1 junio)
+## 🔧 Últimos cambios (v6 — 2 junio)
 
-- `index.html` → **redirige automáticamente** a `visor-threejs.html` (meta refresh 0s)
-- `iniciar.bat` → ahora **detecta si el puerto 8080 ya está ocupado** y no duplica el servidor
-- **Cartas individuales** — cada carta es un GLB independiente (ya no el mazo-lámina)
-- **Tapetes desde GLB** — 4 tapetes (Verde, Rojo, Azul, Amarillo) modelados por Zet, cargados y arrastrables
-- **Selector de baraja** — Poker / Cartoon / Española (48 cartas)
-- **3 modos de visualización** — Abanico, Fila, Libres
-- **Arrastre universal** — click → hold → drag tanto para cartas como para tapetes
+### 🏠 Launcher minimalista
+- `index.html` ahora es un **launcher** con dos botones: ESCENARIO (desplegable) + PRUEBA MESA (directo)
+- Sin carga de modelos al arrancar (`src=""`)
+- Al elegir escenario → se oculta el launcher y aparece el viewer
+- Botón **← Inicio** para volver al launcher
+- Escenarios reordenados: Taller 1º (rápido), Playa último (pesado)
+
+### 🐛 Bug corregido: viewer negro
+- El launcher se ocultaba con `opacity: 0` pero seguía ocupando espacio en el DOM
+- El viewer se renderizaba 100vh más abajo (fuera de pantalla)
+- Fix: `display: none` en vez de solo opacidad
+
+### 🎭 Fix: Shadow acne
+- Las mesas, tapetes y cartas mostraban ondas/surcos por auto-sombreado
+- Causa: `shadow.bias = 0` por defecto en la luz direccional
+- Solución:
+  ```js
+  dl.shadow.bias = -0.0005;
+  dl.shadow.normalBias = 0.02;
+  ```
+
+### 🗑️ Limpieza
+- Eliminada opción duplicada "Ref. Cámara" del selector
+- Eliminados 4 modelos históricos del visor (movidos a `_BACKUPS/mesas_historicas/`)
+
+### 🎴 Dorsos mejorados
+- 26 dorsos: 15 de Zeta + 11 de Miguel Gil
+- Selector por artista (Zeta / Miguel Gil)
+- Textura espejada horizontalmente para corregir orientación
+- Dorso plano en XZ, pegado bajo la carta
 
 ---
 
-## 📐 Estado actual (v5 — cartas individuales)
+## 📐 Estado actual (v6)
 
 ### ✅ Lo que funciona
-- **Selector de mesa** con 6 modelos
-- **Cámara orbit + zoom** 3D↔cenital
-- **Sistema de capas modulares:**
-  - ✅ Mesa — siempre visible, cambia al seleccionar
-  - ✅ Tapete — toggle on/off, selector de 4 colores, **arrastrable libremente**
-  - ✅ Cartas — toggle on/off, selector de 3 barajas, **cada carta arrastrable individualmente**
-- **Al cambiar de mesa** → tapete y cartas se limpian automáticamente
 
-### 🃏 Barajas disponibles
+**Launcher (index.html):**
+- Launcher minimalista con logo + 2 botones
+- Dropdown ESCENARIO con 4 escenas
+- Enlace PRUEBA MESA a visor-threejs.html
+- Carga de escenas con skybox HDRI
+- Botón ← Inicio para volver al launcher
+
+**Visor de trabajo (visor-threejs.html):**
+- **5 modelos de mesa:** Orgánica V1/V2/V3, Rectangular V1/V2
+- **Cámara orbit + zoom + auto-rotación**
+- **Sistema de capas:**
+  - ✅ Mesa — siempre visible, cambia al seleccionar
+  - ✅ Tapete — toggle on/off, 4 colores, arrastrable libremente
+  - ✅ Cartas — toggle on/off, 3 barajas, 4 modos
+- **3 barajas:** Poker Normal (52), Poker Cartoon (52), Española (48)
+- **4 tapetes:** Verde, Rojo, Azul, Amarillo (GLBs)
+- **26 dorsos:** selector por artista + desplegable por diseño
+- **4 modos de carta:** Abanico, Fila, Libres, Repartir
+- **Arrastre universal:** click → hold → drag para cartas y tapetes
+- **Flip:** click derecho o tecla F
+- **Rotación tapete:** tecla R / Shift+R
+- **Selección:** borde azul en carta o tapete seleccionado
+- **Al cambiar de mesa:** tapete y cartas se limpian automáticamente
+
+### 🃏 Barajas
 
 | Baraja | Archivos | Peso | Notas |
 |--------|----------|------|-------|
 | Poker Normal | 52 GLBs | ~30 MB | As, 2-10, Jota, Reina, Rey × 4 palos |
 | Poker Cartoon | 52 GLBs | ~22 MB | Estilo caricatura |
-| Española | 48 GLBs | ~1.7 MB | As-9, Sota, Caballo, Rey × 4 palos |
+| Española | 48 GLBs | ~1.7 MB | 1-9, Sota, Caballo, Rey × 4 palos (sirve para 40 quitando 8 y 9) |
 
 ### 🟫 Tapetes
 
@@ -46,57 +86,103 @@
 | Azul | `Tapete_Azul.glb` | ~2 KB |
 | Amarillo | `Tapete_Amarillo.glb` | ~2 KB |
 
-### 📦 Assets
+### 🎴 Dorsos
+
+| Artista | Cantidad | Diseños |
+|---------|----------|---------|
+| Zeta | 15 | Base, Acuático, Carnaval 1/2, Cartoon, Esotérico, Espacial, Lumen, Medieval, Natura, Navidad, Tecno, Tecnológico, Vintage 1/2 |
+| Miguel Gil | 11 | (11 diseños diversos) |
+
+---
+
+## 📦 Assets
 
 ```
-assets/cartas/
-├── poker_normal/      → 52 GLBs (Carta_Poker_Normal_As_Picas.glb, ...)
-├── poker_cartoon/     → 52 GLBs (Carta_Poker_Cartoon_As_Picas.glb, ...)
-├── espanola/          → 48 GLBs (Carta_Espanola_As_Bastos.glb, ...)
-├── dorsos/            → 3 GLBs (Carta_Dorso_Poker_Normal.glb, ...)
-└── tapetes/           → 4 GLBs (Tapete_Verde.glb, ...)
+assets/
+├── playa.glb                     ← Escenario playa
+├── bosque_cartoon.glb            ← Escenario bosque
+├── mesa_carpintero.glb           ← Escenario estudio
+├── taller_carpintero.glb         ← Escenario taller
+├── combinaciones/                ← Variantes de mesa por escena
+├── mesas/                        ← Modelos GLB de mesas
+│   ├── mesa_v01_sin_tapete.glb   ← Orgánica V1 (68 KB)
+│   ├── mesa_v02_sin_tapete.glb   ← Orgánica V2 (44 KB)
+│   ├── mesa_v03_sin_tapete.glb   ← Orgánica V3 (34 KB)
+│   ├── mesa_rectangular_v01.glb  ← Rectangular V1 (25 KB)
+│   └── mesa_rectangular_v02.glb  ← Rectangular V2 (25 KB)
+├── texturas_cartas/              ← 152 PNGs
+└── cartas/
+    ├── poker_normal/             → 52 GLBs
+    ├── poker_cartoon/            → 52 GLBs
+    ├── espanola/                 → 48 GLBs
+    ├── dorsos/
+    │   ├── dorso_zeta/           → 15 PNGs
+    │   └── dorso_miguel_gil/     → 11 PNGs
+    └── tapetes/                  → 4 GLBs
 ```
 
 ---
 
-## 🏗️ Arquitectura (capas independientes)
+## 🏗️ Arquitectura
 
 ```
-VISOR (visor-threejs.html)
-├── 🌐 ESCENA BASE (luces, suelo, cámara)
-├── 🪵 MESA ── selector de modelo ── toggle fijo
-├── 🟫 TAPETE ── toggle ── selector color ── arrastrable
-│   └── Colores: Verde / Rojo / Azul / Amarillo (GLBs de Zet)
-├── 🃏 CARTAS ── toggle ── selector baraja ── modo
-│   ├── 🎯 Abanico (disposición en abanico)
-│   ├── 📏 Fila (ordenadas en línea)
-│   └── 🖐️ Libres (dispersión aleatoria)
-│   └── Cada carta: independiente, click → hold → drag
-└── 🔍 Zoom slider
-```
+index.html (LAUNCHER + ESCENARIOS)
+├── MODO LAUNCHER: ESCENARIO ↓ + PRUEBA MESA →
+├── MODO VIEWER: model-viewer con escenario
+└── ← Inicio: vuelve al launcher
 
-**Regla importante:** Cada capa es independiente. Al cambiar de mesa, todas las capas secundarias se resetean.
+visor-threejs.html (HERRAMIENTA DE TRABAJO)
+├── 🌐 ESCENA BASE
+│   ├── Luces: Ambient (0.4) + Directional key (4) + 2 fill
+│   ├── Sombra: PCFSoft, mapa 1024, bias -0.0005
+│   ├── Suelo: PlaneGeometry 6m, color 0x1a1a2e
+│   └── Cámara: Perspective 45°, OrbitControls
+├── 🪵 MESA ── GLTFLoader ── cast+receive shadow
+├── 🟫 TAPETE ── toggle ── 4 colores ── arrastrable
+└── 🃏 CARTAS ── toggle ── 3 barajas ── 4 modos
+    ├── Cada carta: GLB independiente, cast+receive shadow
+    └── Dorso: PlaneGeometry, MeshStandardMaterial, sin receiveShadow
+```
 
 ---
 
-## 🧩 Próximos pasos
+## 🧠 Notas técnicas
 
-1. **Dorso de carta** — mostrar dorso cuando esté en ciertos modos
-2. **Selección múltiple** — agarrar varias cartas a la vez
-3. **Animaciones** — al repartir, las cartas vuelan a su posición
-4. **Mesa con tapete integrado** — Zet puede modelar mesas + tapete como un solo GLB
+### Shadow bias
+Las superficies detalladas (veteado de madera, texturas) sufrían shadow acne.
+```js
+dl.shadow.bias = -0.0005;
+dl.shadow.normalBias = 0.02;
+```
+
+### Dorso
+- Plano en XZ (`rotation.x = -PI/2`)
+- `receiveShadow = false` (por defecto) → evita shadow acne en el dorso
+- Textura cargada con `TextureLoader`, espejada con `repeat.x = -1`
+- Tamaño dinámico: bounding box de la carta × 1.01
+
+### Model-viewer (escenarios)
+- Usa skyboxes HDR de Poly Haven
+- Distancia de órbita variable por escena
+- El launcher no carga ningún modelo al arrancar
+
+### Firefox vs Chrome
+- Firefox: ~2GB VRAM → no recomendado
+- Chrome: consumo normal → recomendado
 
 ---
 
 ## 🔗 Links
+
 - **GitHub:** https://github.com/atezeta69-create/sysneria-3d-viewer
+- **GitHub Pages:** https://atezeta69-create.github.io/sysneria-3d-viewer/
 - **GLBs originales (Zet):** `SysNerIA_Zet/CARTAS_GLB/`
 - **Blends originales:** `SysNerIA_Zet/CARTAS_INDIVIDUALES/`
+- **Diario Portátil:** `Sysneria_Portatil/DIARIO_SYSNERIA_PORTATIL.md`
 - **Diario Zet:** `SysNerIA_Zet/DIARIO_SYSNERIA_ZET.md`
-- **Checkpoint:** `checkpoint/2026-06-01_cartas-individuales`
-- **Backup físico:** `02_VISOR_WEB/_BACKUPS/visor_cartas_individuales_2026-06-01/`
 
 ---
 
 > 🧠 Nota técnica: Las cartas miden 0.063 x 0.088 unidades (tamaño real de póker).  
-> Los tapetes miden ~0.9 x 0.58 unidades. Escala aplicada: 0.8x a las cartas para el visor.
+> Los tapetes miden ~0.9 x 0.58 unidades. Escala aplicada: 0.8x a las cartas para el visor.  
+> Grosor de mesa corregido a 122mm.
