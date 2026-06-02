@@ -374,6 +374,8 @@ dl.position.set(3, 6, 4);
 dl.castShadow = true;
 dl.shadow.mapSize.width = 1024;
 dl.shadow.mapSize.height = 1024;
+dl.shadow.bias = -0.0005;
+dl.shadow.normalBias = 0.02;
 scene.add(dl);
 const fl = new THREE.DirectionalLight(0x8888ff, 0.6);
 fl.position.set(-2, 3, -3);
