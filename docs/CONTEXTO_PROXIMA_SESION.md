@@ -1,74 +1,72 @@
-# 🗂️ CONTEXTO — Próxima sesión
+# 📋 Contexto para próxima sesión — Sysneria_Portatil
 
-> **Última sesión:** 2 de junio de 2026  
-> **Proyecto:** SysNerIA Visor 3D — Pre-alfa  
-> **Propósito:** Archivo de continuidad para retomar el trabajo exactamente donde lo dejamos
-
----
-
-## 📍 Dónde estamos
-
-### index.html ✓
-- Launcher minimalista funcional (ESCENARIO desplegable + PRUEBA MESA directo)
-- 4 escenarios decorativos operativos (Taller, Estudio, Bosque, Playa)
-- Sin carga de modelos al arrancar
-- Botón ← Inicio vuelve al launcher
-- Bug de pantalla negra corregido (display:none)
-- Bug "Ref. Cámara" duplicado eliminado
-
-### visor-threejs.html ✓
-- 5 mesas operativas (Orgánica V1/V2/V3, Rectangular V1/V2)
-- 3 barajas con texturas reales (Poker, Cartoon, Española)
-- 4 tapetes (Verde, Rojo, Azul, Amarillo)
-- 26 dorsos (15 Zeta + 11 Miguel Gil) con selector por artista
-- 4 modos de carta (Abanico, Fila, Libres, Repartir)
-- Arrastre, flip, rotación funcionales
-- Shadow acne corregido (bias = -0.0005)
-
-### Documentación ✓
-- README.md actualizado con arquitectura completa
-- DOC_VISOR_CARTAS.md actualizado (v6)
-- Drive: DIARIO_SYSNERIA_PORTATIL.md actualizado
-- Drive: HERMES_DIARIO/DIARIO.md actualizado
-- Drive: Nota para Zet en SysNerIA_Zet/AVANCE_2026-06-02.md
-- Este archivo de continuidad
+> Generado: 2 de junio de 2026 (cierre de sesión)
+> Proyecto: Visor 3D de mesa de trabajo para magos (pre-alfa)
 
 ---
 
-## 📋 Pendiente para la próxima
+## 🏁 Estado actual
 
-### Sin resolver / para decidir con Z
-- [ ] Renombrar botón "PRUEBA MESA" → "Mesa de Pruebas" (en verde)
-- [ ] Optimizar rendimiento para Firefox (consume ~2GB VRAM)
-- [ ] Posible cache-busting en "← Volver" si Chrome bfcached versión antigua
+El visor web **funcional y completo** con:
+- **5 mesas** intercambiables (Orgánica V1/V2/V3, Rectangular V1/V2)
+- **Sistema de capas**: Mesa / Tapete / Cartas (independientes, toggle on/off)
+- **3 barajas**: Poker Normal, Poker Cartoon, Española
+- **4 tapetes** GLB: Verde, Rojo, Azul, Amarillo
+- **26 dorsos**: 15 de Zeta + 11 de Miguel Gil
+- **4 modos**: Abanico, Fila, Libres, Repartir
+- **Arrastre universal**: cartas y tapetes (click→hold→drag)
+- **Cámara frontal**: `(0, 1.50, 2.8)` — como usuario sentado frente a la mesa
 
-### Ideas exploradas pero no implementadas
-- Migrar a servidor con cabeceras cache-control
-- Explorar más la arquitectura modular con Z
+## 🖐️ Cursor Mano 3D (NUEVO)
+
+- 3 GLBs en `assets/cursor/` (mano_abierta, dedos_sep, puño) ~58 KB c/u
+- Máquina estados: reposo → abriendo → cerrando → agarrado → soltando → volviendo
+- Crossfade ease-out 150ms entre estados
+- Sigue al ratón proyectado sobre la mesa con lerp suave
+- Siempre apunta a las 12 (rota según ángulo de cámara)
+- Cursor nativo oculto (CSS)
+
+## 📱 Controles para móvil (NUEVO)
+
+- Botón **↻ Voltear** al seleccionar carta
+- Botones **↺↻** para girar carta (alternativa a rueda/R)
+- **Doble tap** sobre carta seleccionada → voltea
+- Todos los controles de escritorio conservados (clic derecho, tecla F, Rueda, R)
+
+## 🧠 Aprendizajes de esta sesión
+
+1. **Comprobar Drive compartido primero** antes de construir features desde cero — Zet ya había procesado los modelos de mano
+2. **Cámara desde el frente**: la orientación inicial de la cámara afecta a todo: cartas, mano, tapetes
+3. **La mano 3D debe rotar con la cámara** para que siempre apunte "hacia arriba" desde la vista del usuario
+4. **Los modelos OBJ encontrados por Z se procesaron con Decimate a ~1.200 vértices para web**
+5. **Los GLBs se copian a `assets/cursor/` y se cargan con GLTFLoader normal (sin Draco por tamaño)**
+
+## 📂 Archivos clave del proyecto
+
+| Archivo | Descripción |
+|---------|-------------|
+| `02_VISOR_WEB/visor-threejs.html` | Visor principal (herramienta de trabajo) |
+| `02_VISOR_WEB/index.html` | Launcher minimalista con escenarios |
+| `02_VISOR_WEB/assets/cursor/` | 3 GLBs del cursor mano |
+| `02_VISOR_WEB/DOC_VISOR_CARTAS.md` | Documentación técnica (v8) |
+| `02_VISOR_WEB/docs/README.md` | README del proyecto |
+
+## 🔗 Enlaces
+
+- **GitHub Pages:** https://atezeta69-create.github.io/sysneria-3d-viewer/
+- **Repositorio:** https://github.com/atezeta69-create/sysneria-3d-viewer
+- **Modelos mano (Drive):** SysNerIA/Blender 3D/Materiales_compartidos_por_Zeta/mano_blender_puntero/procesados_zeta/
+- **Diario Portátil:** Sysneria_Portatil/DIARIO_SYSNERIA_PORTATIL.md (Drive)
+
+## ⏭️ Posibles próximos pasos (a discutir con Z)
+
+- Versión en inglés de la página
+- Mejoras en la UI (más pulida)
+- Nuevos escenarios o mesas
+- Más animaciones para la mano
+- Sistema de guardado/carga de posición de cartas
+- Refinar rendimiento en móviles de gama baja
 
 ---
 
-## 📦 Checkpoints git (últimos)
-
-| Tag | Commit |
-|-----|--------|
-| `checkpoint/2026-06-02_antes-shadow-bias` | Backup antes del fix de sombras |
-| `checkpoint/2026-06-02_launcher-minimalista` | Launcher + viewer + fix display:none |
-| `checkpoint/2026-06-02_visor-limpio-sin-historicos` | Mesas históricas a _BACKUPS |
-| `checkpoint/2026-06-02_mesas-sin-tapete-v1-v2-v3` | Nuevas mesas orgánicas |
-
----
-
-## 🔧 Para arrancar la próxima vez
-
-```bash
-cd /c/Users/Zeta/proyectos_blender/02_VISOR_WEB
-git log --oneline -10           # Ver últimos cambios
-python -m http.server 8080      # Iniciar servidor
-# Abrir http://localhost:8080
-```
-
-Y si hay algo nuevo de Zet en Drive:
-```bash
-ls "/g/Mi unidad/SysNerIA/Blender 3D/SysNerIA_Zet/"
-```
+*Documento de continuidad — leer al empezar la próxima sesión para retomar contexto.*

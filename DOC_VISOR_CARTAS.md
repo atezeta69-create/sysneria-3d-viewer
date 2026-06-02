@@ -1,6 +1,6 @@
 # 🃏 Visor Three.js — Documentación técnica
 
-> **Fecha:** 2 de junio de 2026 (v6)  
+> **Fecha:** 2 de junio de 2026 (v8)  
 > **Archivo principal:** `02_VISOR_WEB/visor-threejs.html`  
 > **Arquitectura:** Capas independientes + Launcher minimalista
 
@@ -22,6 +22,13 @@
 ### 🔄 Cámara corregida
 - Posición inicial: `(0, 1.50, 2.8)` — frente a la mesa (como usuario sentado)
 - Antes: `(0, 1.50, -2.8)` — detrás de la mesa (obligaba a girar 180°)
+
+### 📱 Controles para móvil
+- **Botón "↻ Voltear"** — aparece al seleccionar una carta, voltea la carta
+- **Botones ↺↻ de giro** — rotan la carta seleccionada ~15° (alternativa a rueda/R)
+- **Doble tap** sobre carta seleccionada → voltea (para móvil/tablet)
+- Todos los botones desaparecen al deseleccionar la carta
+- Los 3 métodos conviven: botón UI, doble tap (móvil) + tecla F + clic derecho (escritorio)
 
 ### 📦 Assets nuevos
 - `assets/cursor/` — 3 GLBs del cursor mano
