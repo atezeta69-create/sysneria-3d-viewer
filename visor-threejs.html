@@ -482,8 +482,10 @@ function startReleaseCursor() { if (cursorState === 'agarrado') enterCursorState
 const CURSOR_SCALE = 1.2;
 const CURSOR_HEIGHT_OFFSET = 0.02;
 cursorGroup.scale.set(CURSOR_SCALE, CURSOR_SCALE, CURSOR_SCALE);
-// Mano tumbada sobre la mesa (palma hacia abajo)
-cursorGroup.rotation.x = -Math.PI / 2;
+// Mano tumbada sobre la mesa, dedos hacia las 12
+cursorGroup.rotation.order = 'YXZ';
+cursorGroup.rotation.y = -Math.PI / 2; // girar para que apunte a las 12
+cursorGroup.rotation.x = -Math.PI / 2; // tumbar sobre la mesa
 
 // Seguimiento del ratón (screen coords para proyectar en el plano de la mesa)
 let cursorLastClientX = 0;
