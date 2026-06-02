@@ -445,7 +445,6 @@
         <option value="bosque">🌳 Bosque</option>
         <option value="mesa">🎨 Estudio</option>
         <option value="taller">🛠️ Taller</option>
-        <option value="referencia">📐 Ref. Cámara</option>
         <option value="prototipo">⚡ Prueba Mesas</option>
       </select>
       <select id="mesa-select" class="nav-select">
@@ -652,11 +651,7 @@ document.getElementById('scene-select').addEventListener('change', async (e) => 
     window.location.href = 'visor-threejs.html';
     return;
   }
-  if (val === 'referencia') {
-    window.location.href = 'visor-threejs.html?model=mesa_referencia.glb';
-    return;
-  }
-  
+
   // Scene configs
   const scenes = {
     playa:   { model: 'assets/playa.glb',   title: 'Playa Palmeras',    desc: 'Palmeras · arena · océano · nubes',     skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr',                     maxRadius: '20m' },
