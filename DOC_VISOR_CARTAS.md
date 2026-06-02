@@ -6,7 +6,28 @@
 
 ---
 
-## 🔧 Últimos cambios (v6 — 2 junio)
+## 🔧 Últimos cambios (v7 — 2 junio)
+
+### 🖐️ Cursor Mano 3D
+- **3 modelos GLB** (~58 KB, ~1.200 vértices) en `assets/cursor/`:
+  - `cursor_mano_abierta.glb` — reposo
+  - `cursor_dedos_sep.glb` — transición apertura/cierre
+  - `cursor_puño.glb` — agarre
+- **Máquina de estados:** reposo → abriendo → cerrando → agarrado → soltando → volviendo → reposo
+- **Crossfade:** ease-out 150ms entre cada estado
+- **Sigue al ratón:** proyectado sobre el plano de la mesa con lerp suave (0.25)
+- **Siempre hacia las 12:** rota automáticamente según el ángulo de la cámara
+- **Cursor nativo oculto** mediante CSS `cursor: none`
+
+### 🔄 Cámara corregida
+- Posición inicial: `(0, 1.50, 2.8)` — frente a la mesa (como usuario sentado)
+- Antes: `(0, 1.50, -2.8)` — detrás de la mesa (obligaba a girar 180°)
+
+### 📦 Assets nuevos
+- `assets/cursor/` — 3 GLBs del cursor mano
+- Origen: Drive compartido → Materiales_compartidos_por_Zeta/mano_blender_puntero/
+
+### Cambios anteriores (v6 — 1 junio)
 
 ### 🏠 Launcher minimalista
 - `index.html` ahora es un **launcher** con dos botones: ESCENARIO (desplegable) + PRUEBA MESA (directo)
