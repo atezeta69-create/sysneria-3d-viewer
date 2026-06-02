@@ -281,6 +281,10 @@ function cargarTexturaDorso(sourceKey, file) {
   dorsoTextureLoader.load(url, (tex) => {
     dorsoTexture = tex;
     dorsoTexture.colorSpace = THREE.SRGBColorSpace;
+    // Corregir espejado horizontal: la textura se ve al revés al rotar el plano
+    dorsoTexture.wrapS = THREE.RepeatWrapping;
+    dorsoTexture.repeat.x = -1;
+    dorsoTexture.offset.x = 1;
     // Actualizar todas las cartas existentes
     cartas.forEach(c => {
       if (c.userData.dorsoMesh) {
