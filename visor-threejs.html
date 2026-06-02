@@ -1279,6 +1279,12 @@ function animate() {
     
     // Actualizar crossfade
     updateCursorFade();
+    
+    // Rotar mano para que siempre apunte hacia arriba (12) desde la vista actual
+    const camDir = new THREE.Vector3();
+    camera.getWorldDirection(camDir);
+    const azimuth = Math.atan2(camDir.x, camDir.z);
+    cursorGroup.rotation.y = azimuth - Math.PI / 2;
   }
   
   controls.update();
