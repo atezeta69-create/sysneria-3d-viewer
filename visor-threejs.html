@@ -1093,7 +1093,9 @@ document.querySelector('#zoomSlider').addEventListener('input', (e) => {
 //  INICIO
 // ═══════════════════════════════════════════════
 
-cargarModelo('assets/mesas/mesa_organica_v01.glb');
+// Cargar la primera mesa del selector (Orgánica V1)
+const firstMesaBtn = document.querySelector('.mesa-btn');
+if (firstMesaBtn) cargarModelo(firstMesaBtn.dataset.model);
 
 window.addEventListener('resize', () => {
   const a = window.innerWidth / window.innerHeight;
