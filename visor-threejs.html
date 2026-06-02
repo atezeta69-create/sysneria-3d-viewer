@@ -45,12 +45,15 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
 .lock-row{display:flex;align-items:center;gap:4px;margin:4px 0 2px 8px;font-size:11px;color:#6a6458}
 .lock-label{margin-right:8px}
 
-/* ── Selector de dorsos ── */
-.dorso-select{display:flex;gap:3px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
-.dorso-select.active{opacity:1;pointer-events:all}
-.dorso-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:2px 7px;border-radius:6px;cursor:pointer;font-size:9px;font-family:inherit;transition:all 0.15s}
-.dorso-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
-.dorso-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
+/* ── Selector de dorsos: fuente + desplegable ── */
+.source-select{display:flex;gap:4px;margin:6px 0 2px 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s}
+.source-select.active{opacity:1;pointer-events:all}
+.source-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 0;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s;flex:1;text-align:center}
+.source-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
+.source-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
+.dorso-dropdown{width:calc(100% - 8px);margin:0 0 0 8px;padding:4px 6px;background:rgba(20,18,14,0.9);color:#c8b898;border:1px solid rgba(200,184,152,0.2);border-radius:6px;font-size:11px;font-family:inherit;cursor:pointer;opacity:0.5;pointer-events:none;transition:opacity 0.3s}
+.dorso-dropdown.active{opacity:1;pointer-events:all}
+.dorso-dropdown option{background:#1a1814;color:#c8b898}
 
 /* ── Selector de baraja ── */
 .deck-select{display:flex;gap:4px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
@@ -141,17 +144,12 @@ body{overflow:hidden;background:#111;font-family:'Segoe UI',Arial,sans-serif}
     <button class="deck-btn" data-deck="poker_cartoon">😄 Cartoon</button>
     <button class="deck-btn" data-deck="espanola">🇪🇸 Española</button>
   </div>
-
-  <div class="dorso-select" id="dorso-options">
-    <button class="dorso-btn active" data-dorso="base">🎴 Base</button>
-    <button class="dorso-btn" data-dorso="medieval">🏰 Medieval</button>
-    <button class="dorso-btn" data-dorso="vintage_001">📜 Vintage</button>
-    <button class="dorso-btn" data-dorso="tecno_futurisca">🤖 Tecno</button>
-    <button class="dorso-btn" data-dorso="esoterico">🔮 Esotérico</button>
-    <button class="dorso-btn" data-dorso="lumen">✨ Lumen</button>
-    <button class="dorso-btn" data-dorso="cartoon_01">😄 Cartoon</button>
-    <button class="dorso-btn" data-dorso="vintage_002">📜 Vintage 2</button>
+  <div class=section style=margin-top:2px>🎴 Dorsos</div>
+  <div class=source-select id=dorso-source-options>
+    <button class=source-btn active data-source=zeta>🎴 Zeta</button>
+    <button class=source-btn data-source=miguel_gil>🎴 Miguel Gil</button>
   </div>
+  <select class=dorso-dropdown id=dorso-dropdown></select>
 
   <div class="mode-select" id="card-options">
     <button class="mode-btn active" data-mode="fan">🃏 Abanico</button>
@@ -212,18 +210,49 @@ const DECKS = {
 
 const TAPETES = ['Verde', 'Rojo', 'Azul', 'Amarillo'];
 
-const DORSOS = [
-  { id: 'base',         label: '🎴 Base' },
-  { id: 'medieval',     label: '🏰 Medieval' },
-  { id: 'vintage_001',  label: '📜 Vintage' },
-  { id: 'tecno_futurisca', label: '🤖 Tecno' },
-  { id: 'esoterico',    label: '🔮 Esotérico' },
-  { id: 'lumen',        label: '✨ Lumen' },
-  { id: 'cartoon_01',   label: '😄 Cartoon' },
-  { id: 'vintage_002',  label: '📜 Vintage 2' },
-];
+const DORSO_SOURCES = {
+  zeta: {
+    label: 'Zeta',
+    dir: 'dorso_zeta',
+    dorsos: [
+      { file: 'dorso_zeta_base.png', label: '🎴 Base' },
+      { file: 'dorso_zeta_acuatico.png', label: '🌊 Acuático' },
+      { file: 'dorso_zeta_carnaval_001.png', label: '🎭 Carnaval 1' },
+      { file: 'dorso_zeta_carnaval_002.png', label: '🎭 Carnaval 2' },
+      { file: 'dorso_zeta_cartoon_01.png', label: '😄 Cartoon' },
+      { file: 'dorso_zeta_esoterico_01.png', label: '🔮 Esotérico' },
+      { file: 'dorso_zeta_espacial.png', label: '🚀 Espacial' },
+      { file: 'dorso_zeta_lumen_01.png', label: '✨ Lumen' },
+      { file: 'dorso_zeta_medieval_01.png', label: '🏰 Medieval' },
+      { file: 'dorso_zeta_natura.png', label: '🌿 Natura' },
+      { file: 'dorso_zeta_navidad.png', label: '🎄 Navidad' },
+      { file: 'dorso_zeta_tecno_futurisca_01.png', label: '🤖 Tecno' },
+      { file: 'dorso_zeta_tecnologico.png', label: '💻 Tecnológico' },
+      { file: 'dorso_zeta_vintage_001.png', label: '📜 Vintage 1' },
+      { file: 'dorso_zeta_vintage_002.png', label: '📜 Vintage 2' },
+    ]
+  },
+  miguel_gil: {
+    label: 'Miguel Gil',
+    dir: 'dorso_miguel_gil',
+    dorsos: [
+      { file: 'dorso_miguel_gil_base_00.png', label: '🎴 Base 1' },
+      { file: 'dorso_miguel_gil_base_01.png', label: '🎴 Base 2' },
+      { file: 'dorso_miguel_gil_carnaval.png', label: '🎭 Carnaval' },
+      { file: 'dorso_miguel_gil_espacial_001.png', label: '🚀 Espacial 1' },
+      { file: 'dorso_miguel_gil_espacial_002.png', label: '🚀 Espacial 2' },
+      { file: 'dorso_miguel_gil_industrial.png', label: '🏭 Industrial' },
+      { file: 'dorso_miguel_gil_medieval.png', label: '🏰 Medieval' },
+      { file: 'dorso_miguel_gil_navidad_001.png', label: '🎄 Navidad 1' },
+      { file: 'dorso_miguel_gil_navidad_002.png', label: '🎄 Navidad 2' },
+      { file: 'dorso_miguel_gil_tecno_futurista.png', label: '🤖 Tecno' },
+      { file: 'dorso_miguel_gil_vintage.png', label: '📜 Vintage' },
+    ]
+  }
+};
 
-let currentDorso = 'base';
+let currentDorsoSource = 'zeta';
+let currentDorsoFile = DORSO_SOURCES.zeta.dorsos[0].file;
 const dorsoTextureLoader = new THREE.TextureLoader();
 let dorsoTexture = null; // textura del dorso actual
 const CARD_SCALE = 0.8;
@@ -235,9 +264,24 @@ const CARD_OFFSET = TAPETE_THICKNESS / 2 + 0.001; // cartas justo encima del tap
 //  DORSO (textura trasera de las cartas)
 // ═══════════════════════════════════════════════
 
-function cargarTexturaDorso(id) {
-  currentDorso = id;
-  const url = `assets/cartas/dorsos/dorso_zeta_${id}.png`;
+function poblarDropdownDorsos(sourceKey) {
+  const source = DORSO_SOURCES[sourceKey];
+  const select = document.querySelector('#dorso-dropdown');
+  select.innerHTML = '';
+  source.dorsos.forEach((d, i) => {
+    const opt = document.createElement('option');
+    opt.value = d.file;
+    opt.textContent = d.label;
+    if (i === 0) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+function cargarTexturaDorso(sourceKey, file) {
+  currentDorsoSource = sourceKey;
+  currentDorsoFile = file;
+  const source = DORSO_SOURCES[sourceKey];
+  const url = `assets/cartas/dorsos/${source.dir}/${file}`;
   dorsoTextureLoader.load(url, (tex) => {
     dorsoTexture = tex;
     dorsoTexture.colorSpace = THREE.SRGBColorSpace;
@@ -288,8 +332,9 @@ function anadirDorso(carta) {
   carta.userData.dorsoMesh = dorsoPlane;
 }
 
-// Cargar textura de dorso por defecto al inicio
-cargarTexturaDorso('base');
+// Poblar dropdown + cargar textura de dorso por defecto al inicio
+poblarDropdownDorsos('zeta');
+cargarTexturaDorso('zeta', DORSO_SOURCES.zeta.dorsos[0].file);
 
 // ═══════════════════════════════════════════════
 //  ESCENA BASE
@@ -965,7 +1010,8 @@ document.querySelectorAll('.toggle-row').forEach(row => {
     // Mostrar opciones contextuales
     document.querySelector('#tapete-options').classList.toggle('active', layer === 'tapete' && show);
     document.querySelector('#deck-options').classList.toggle('active', layer === 'cartas' && show);
-    document.querySelector('#dorso-options').classList.toggle('active', layer === 'cartas' && show);
+    document.querySelector('#dorso-source-options').classList.toggle('active', layer === 'cartas' && show);
+    document.querySelector('#dorso-dropdown').classList.toggle('active', layer === 'cartas' && show);
     document.querySelector('#card-options').classList.toggle('active', layer === 'cartas' && show);
   });
 });
@@ -985,13 +1031,22 @@ document.querySelectorAll('.deck-btn[data-deck]').forEach(btn => {
   });
 });
 
-// ── Selector de dorso ──
-document.querySelectorAll('.dorso-btn[data-dorso]').forEach(btn => {
+// ── Selector de dorso: fuente (Zeta / Miguel Gil) ──
+document.querySelectorAll('.source-btn[data-source]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.dorso-btn[data-dorso]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.source-btn[data-source]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    cargarTexturaDorso(btn.dataset.dorso);
+    const source = btn.dataset.source;
+    poblarDropdownDorsos(source);
+    // Cargar el primer dorso de esa fuente automáticamente
+    const first = DORSO_SOURCES[source].dorsos[0];
+    cargarTexturaDorso(source, first.file);
   });
+});
+
+// ── Selector de dorso: desplegable ──
+document.querySelector('#dorso-dropdown').addEventListener('change', (e) => {
+  cargarTexturaDorso(currentDorsoSource, e.target.value);
 });
 
 // ── Selector de tapete ──
