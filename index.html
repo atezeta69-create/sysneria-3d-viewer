@@ -28,11 +28,132 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* ===== LAYOUT ===== */
-  #app {
+  /* ===== LAUNCHER (modo minimalista) ===== */
+  #launcher {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100dvh;
+    background: #0a0a0f;
+    position: relative;
+    z-index: 20;
+    transition: opacity 0.4s ease;
+  }
+
+  #launcher.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .launcher-content {
+    text-align: center;
+  }
+
+  .launcher-logo {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #b8a88a, #d4c5a9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 60px;
+  }
+
+  .launcher-buttons {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .launcher-btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 36px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: #e0dcd0;
+    min-width: 180px;
+    text-align: center;
+  }
+
+  .launcher-btn:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+
+  .launcher-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* Dropdown container */
+  .launcher-btn-group {
+    position: relative;
+  }
+
+  .launcher-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 6px;
+    min-width: 200px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    z-index: 30;
+  }
+
+  .launcher-dropdown.open {
+    display: block;
+  }
+
+  .launcher-dropdown button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: #8a8478;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .launcher-dropdown button:hover {
+    background: rgba(255,255,255,0.04);
+    color: #d4c5a9;
+  }
+
+  .launcher-dropdown button:active {
+    background: rgba(212,197,169,0.08);
+  }
+
+  /* ===== VIEWER SECTION (oculto hasta elegir escenario) ===== */
+  #viewer-section {
+    display: none;
     flex-direction: column;
     height: 100dvh;
+  }
+
+  #viewer-section.active {
+    display: flex;
   }
 
   /* ===== HEADER ===== */
@@ -65,6 +186,52 @@
     background: rgba(255,255,255,0.07);
     color: #8a8478;
     border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  #header-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .nav-select {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #c8b898;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .nav-select:hover {
+    border-color: rgba(212,197,169,0.3);
+  }
+
+  .nav-select option {
+    background: #1a1814;
+    color: #c8b898;
+  }
+
+  #back-launcher {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #8a8478;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  #back-launcher:hover {
+    background: rgba(255,255,255,0.04);
+    color: #d4c5a9;
+    border-color: rgba(212,197,169,0.2);
   }
 
   /* ===== MODEL VIEWER ===== */
@@ -431,21 +598,72 @@
       font-size: 11px;
     }
   }
+
+  @media (max-width: 480px) {
+    .launcher-buttons {
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+    }
+    .launcher-btn {
+      min-width: 200px;
+      padding: 16px 24px;
+    }
+    .launcher-logo {
+      font-size: 22px;
+      margin-bottom: 40px;
+    }
+    #header-controls {
+      gap: 6px;
+    }
+    .nav-select {
+      font-size: 11px;
+      padding: 4px 8px;
+      max-width: 120px;
+    }
+  }
 </style>
 </head>
 <body>
 
-<div id="app">
+<!-- ════════════════════════════════════════ -->
+<!-- LAUNCHER (modo minimalista)             -->
+<!-- ════════════════════════════════════════ -->
+<div id="launcher">
+  <div class="launcher-content">
+    <div class="launcher-logo">◈ SysNerIA</div>
+    <div class="launcher-buttons">
+      <div class="launcher-btn-group">
+        <button id="escenario-btn" class="launcher-btn">ESCENARIO</button>
+        <div id="escenario-dropdown" class="launcher-dropdown">
+          <button data-scene="taller">🛠️ Taller</button>
+          <button data-scene="mesa">🎨 Estudio</button>
+          <button data-scene="bosque">🌳 Bosque</button>
+          <button data-scene="playa">🏖️ Playa</button>
+        </div>
+      </div>
+      <a href="visor-threejs.html" class="launcher-btn">PRUEBA MESA</a>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- VIEWER (model-viewer escenas)           -->
+<!-- ════════════════════════════════════════ -->
+<div id="viewer-section">
+
   <!-- HEADER -->
   <header>
-    <h1>◈ SysNerIA</h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <h1>◈ SysNerIA</h1>
+      <button id="back-launcher">← Inicio</button>
+    </div>
     <div id="header-controls">
       <select id="scene-select" class="nav-select">
-        <option value="playa">🏖️ Playa</option>
-        <option value="bosque">🌳 Bosque</option>
+        <option value="taller" selected>🛠️ Taller</option>
         <option value="mesa">🎨 Estudio</option>
-        <option value="taller">🛠️ Taller</option>
-        <option value="prototipo">⚡ Prueba Mesas</option>
+        <option value="bosque">🌳 Bosque</option>
+        <option value="playa">🏖️ Playa</option>
       </select>
       <select id="mesa-select" class="nav-select">
         <option value="roble">🪵 V1 · Roble</option>
@@ -459,7 +677,7 @@
   <div id="viewer-container">
     <model-viewer
       id="viewer"
-      src="assets/playa.glb"
+      src=""
       alt="Escena 3D"
       camera-controls
       auto-rotate
@@ -494,8 +712,8 @@
 
     <!-- SCENE INFO -->
     <div id="scene-info">
-      <h2 id="scene-title">Playa Palmeras</h2>
-      <p id="scene-desc">Palmeras · arena · océano · nubes</p>
+      <h2 id="scene-title">Taller Carpintero</h2>
+      <p id="scene-desc">Taller · ventana · herramientas</p>
     </div>
 
     <!-- CONTROLS HINT -->
@@ -559,28 +777,91 @@ const corsWarning = document.getElementById('cors-warning');
 const corsClose = document.getElementById('cors-close');
 const rotateToggle = document.getElementById('rotate-toggle');
 
+const launcher = document.getElementById('launcher');
+const viewerSection = document.getElementById('viewer-section');
+const escenarioBtn = document.getElementById('escenario-btn');
+const escenarioDropdown = document.getElementById('escenario-dropdown');
+const backLauncher = document.getElementById('back-launcher');
+
 // --- DETECTAR file:// ---
 if (window.location.protocol === 'file:') {
   corsWarning.style.display = 'flex';
   loadingText.textContent = 'MODO ARCHIVO LOCAL';
-  // Mostrar carga pero ocultar tras 2s con mensaje
   setTimeout(() => {
     loading.classList.add('hidden');
   }, 2000);
-} else {
-  // Solo en servidor: monitorizar carga real
-  // Iniciar skybox de la escena inicial (playa)
-  viewer.skyboxImage = "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr";
-  
-  viewer.addEventListener('load', () => {
-    setTimeout(() => loading.classList.add('hidden'), 300);
-  });
+}
 
-  // Timeout de seguridad: ocultar loading tras 30s
+// --- LAUNCHER: dropdown toggle ---
+escenarioBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  escenarioDropdown.classList.toggle('open');
+});
+
+// Cerrar dropdown al hacer clic fuera
+document.addEventListener('click', () => {
+  escenarioDropdown.classList.remove('open');
+});
+
+escenarioDropdown.addEventListener('click', (e) => {
+  e.stopPropagation();
+});
+
+// --- LAUNCHER: seleccionar escenario ---
+escenarioDropdown.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const scene = btn.dataset.scene;
+    escenarioDropdown.classList.remove('open');
+    launchScene(scene);
+  });
+});
+
+// --- LAUNCHER → VIEWER ---
+function launchScene(sceneKey) {
+  // Ocultar launcher, mostrar viewer
+  launcher.classList.add('hidden');
+  viewerSection.classList.add('active');
+
+  // Configurar y cargar escena
+  const scenes = {
+    taller:  { model: 'assets/taller_carpintero.glb', title: 'Taller Carpintero', desc: 'Taller · ventana · herramientas',  skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/brown_photostudio_02_2k.hdr',             maxRadius: '20m' },
+    mesa:    { model: 'assets/mesa_carpintero.glb',    title: 'Estudio',           desc: 'Sala blanca · iluminación de estudio',skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/monochrome_studio_03_2k.hdr',              maxRadius: '20m' },
+    bosque:  { model: 'assets/bosque_cartoon.glb',     title: 'Bosque Cartoon',    desc: '4 robles · agave · suelo de hierba',  skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr',                     maxRadius: '5m' },
+    playa:   { model: 'assets/playa.glb',               title: 'Playa Palmeras',   desc: 'Palmeras · arena · océano · nubes',   skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr',                     maxRadius: '20m' },
+  };
+
+  const s = scenes[sceneKey];
+  if (!s) return;
+
+  // Sincronizar el select del header
+  document.getElementById('scene-select').value = sceneKey;
+
+  sceneTitle.textContent = s.title;
+  sceneDesc.textContent = s.desc;
+  if (s.skybox) viewer.skyboxImage = s.skybox;
+  viewer.maxCameraOrbit = `360deg 89deg ${s.maxRadius}`;
+  loading.classList.remove('hidden');
+  viewer.src = s.model;
+
+  // Escuchar carga
+  const onLoad = () => {
+    setTimeout(() => loading.classList.add('hidden'), 300);
+  };
+  viewer.addEventListener('load', onLoad, { once: true });
   setTimeout(() => {
     loading.classList.add('hidden');
   }, 30000);
 }
+
+// --- VIEWER → LAUNCHER ---
+function goToLauncher() {
+  viewerSection.classList.remove('active');
+  launcher.classList.remove('hidden');
+  // Limpiar modelo para no mantenerlo en memoria
+  viewer.src = '';
+}
+
+backLauncher.addEventListener('click', goToLauncher);
 
 // --- AUTO-ROTATE TOGGLE ---
 let isRotating = true;
@@ -644,25 +925,21 @@ if (viewer.canActivateAR) {
   arButton.addEventListener('click', () => viewer.activateAR());
 }
 
-// --- SCENE SELECT DROPDOWN ---
+// --- SCENE SELECT DROPDOWN (dentro del viewer) ---
 document.getElementById('scene-select').addEventListener('change', async (e) => {
   const val = e.target.value;
-  if (val === 'prototipo') {
-    window.location.href = 'visor-threejs.html';
-    return;
-  }
 
   // Scene configs
   const scenes = {
-    playa:   { model: 'assets/playa.glb',   title: 'Playa Palmeras',    desc: 'Palmeras · arena · océano · nubes',     skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr',                     maxRadius: '20m' },
-    bosque:  { model: 'assets/bosque_cartoon.glb', title: 'Bosque Cartoon', desc: '4 robles · agave · suelo de hierba',  skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr',                     maxRadius: '5m' },
-    mesa:    { model: 'assets/mesa_carpintero.glb', title: 'Estudio',        desc: 'Sala blanca · iluminación de estudio',skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/monochrome_studio_03_2k.hdr',              maxRadius: '20m' },
-    taller:  { model: 'assets/taller_carpintero.glb',title: 'Taller Carpintero',desc: 'Taller · ventana · herramientas',  skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/brown_photostudio_02_2k.hdr',             maxRadius: '20m' },
+    taller:  { model: 'assets/taller_carpintero.glb', title: 'Taller Carpintero', desc: 'Taller · ventana · herramientas',  skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/brown_photostudio_02_2k.hdr',             maxRadius: '20m' },
+    mesa:    { model: 'assets/mesa_carpintero.glb',    title: 'Estudio',           desc: 'Sala blanca · iluminación de estudio',skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/monochrome_studio_03_2k.hdr',              maxRadius: '20m' },
+    bosque:  { model: 'assets/bosque_cartoon.glb',     title: 'Bosque Cartoon',    desc: '4 robles · agave · suelo de hierba',  skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/autumn_park_2k.hdr',                     maxRadius: '5m' },
+    playa:   { model: 'assets/playa.glb',               title: 'Playa Palmeras',   desc: 'Palmeras · arena · océano · nubes',   skybox: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/bell_park_pier_2k.hdr',                     maxRadius: '20m' },
   };
-  
+
   const s = scenes[val];
   if (!s) return;
-  
+
   sceneTitle.textContent = s.title;
   sceneDesc.textContent = s.desc;
   if (s.skybox) viewer.skyboxImage = s.skybox;
@@ -681,11 +958,11 @@ document.getElementById('mesa-select').addEventListener('change', async (e) => {
   const table = e.target.value;
   const sceneSelect = document.getElementById('scene-select');
   const scene = sceneSelect.value;
-  
+
   // Only switch table if on a scene that supports variants
   const comboScenes = ['taller']; // scenes with table variants
   if (!comboScenes.includes(scene)) return;
-  
+
   const model = `assets/combinaciones/${scene}_${table}.glb`;
   loading.classList.remove('hidden');
   viewer.src = model;
