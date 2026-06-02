@@ -41,8 +41,7 @@
   }
 
   #launcher.hidden {
-    opacity: 0;
-    pointer-events: none;
+    display: none;
   }
 
   .launcher-content {
@@ -783,13 +782,13 @@ const escenarioBtn = document.getElementById('escenario-btn');
 const escenarioDropdown = document.getElementById('escenario-dropdown');
 const backLauncher = document.getElementById('back-launcher');
 
+// --- OCULTAR LOADING AL INICIO (no hay modelo que cargar) ---
+loading.classList.add('hidden');
+
 // --- DETECTAR file:// ---
 if (window.location.protocol === 'file:') {
   corsWarning.style.display = 'flex';
   loadingText.textContent = 'MODO ARCHIVO LOCAL';
-  setTimeout(() => {
-    loading.classList.add('hidden');
-  }, 2000);
 }
 
 // --- LAUNCHER: dropdown toggle ---
@@ -843,11 +842,22 @@ function launchScene(sceneKey) {
   loading.classList.remove('hidden');
   viewer.src = s.model;
 
-  // Escuchar carga
+  // Manejar error de carga
+  const onError = () => {
+    loading.classList.add('hidden');
+    sceneTitle.textContent = 'Error al cargar';
+    sceneDesc.textContent = 'el modelo no se pudo cargar. ¿Servidor local activo?';
+  };
+  viewer.addEventListener('error', onError, { once: true });
+
+  // Escuchar carga exitosa
   const onLoad = () => {
+    viewer.removeEventListener('error', onError);
     setTimeout(() => loading.classList.add('hidden'), 300);
   };
   viewer.addEventListener('load', onLoad, { once: true });
+
+  // Timeout de seguridad
   setTimeout(() => {
     loading.classList.add('hidden');
   }, 30000);
