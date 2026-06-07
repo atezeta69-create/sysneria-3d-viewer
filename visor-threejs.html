@@ -521,7 +521,7 @@ let cursorLastClientY = 0;
 (function loadCursorModels() {
   const cl = new GLTFLoader();
   const models = [
-    { key: 'mano_abierta', url: 'assets/cursor/cursor_mano_abierta.glb' },
+    { key: 'mano_abierta', url: 'assets/cursor/cursor_mano_abierta_ref_index.glb' },
     { key: 'dedos_sep',   url: 'assets/cursor/cursor_dedos_sep.glb' },
     { key: 'punio',       url: 'assets/cursor/cursor_puño.glb' }
   ];
@@ -882,9 +882,16 @@ let highlightLines = null; // borde de carta seleccionada
 let tapeteHighlight = null; // borde de tapete seleccionado
 
 function getDraggableUnderPointer(event) {
-  const rect = renderer.domElement.getBoundingClientRect();
-  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  // Intentar posición del dedo índice primero (Fase 2)
+  const fingerScreen = getFingerScreenPosition();
+  if (fingerScreen) {
+    pointer.copy(fingerScreen);
+  } else {
+    // Fallback: posición del ratón
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  }
   raycaster.setFromCamera(pointer, camera);
 
   const targets = [];
@@ -917,9 +924,16 @@ function getDraggableUnderPointer(event) {
 }
 
 function getTableIntersect(event) {
-  const rect = renderer.domElement.getBoundingClientRect();
-  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  // Intentar posición del dedo índice primero (Fase 2)
+  const fingerScreen = getFingerScreenPosition();
+  if (fingerScreen) {
+    pointer.copy(fingerScreen);
+  } else {
+    // Fallback: posición del ratón
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  }
   raycaster.setFromCamera(pointer, camera);
 
   const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -tableSurfaceY);
@@ -1012,6 +1026,28 @@ function selectTapete(tapete) {
   tapeteHighlight.position.copy(tapete.position);
   tapeteHighlight.position.y += 0.002;
   scene.add(tapeteHighlight);
+}
+
+// ═══════════════════════════════════════════════
+//  FASE 2 — DEDO ÍNDICE (raycast desde el empty)
+// ═══════════════════════════════════════════════
+
+function getIndexFingerWorldPosition() {
+  const manoAbierta = cursorModels['mano_abierta'];
+  if (!manoAbierta) return null;
+  const tip = manoAbierta.getObjectByName('ref_index_tip');
+  if (!tip) return null;
+  const worldPos = new THREE.Vector3();
+  tip.getWorldPosition(worldPos);
+  return worldPos;
+}
+
+function getFingerScreenPosition() {
+  const fingerWorld = getIndexFingerWorldPosition();
+  if (!fingerWorld) return null;
+  const vec = fingerWorld.clone();
+  vec.project(camera);
+  return new THREE.Vector2(vec.x, vec.y);
 }
 
 // ═══════════════════════════════════════════════
