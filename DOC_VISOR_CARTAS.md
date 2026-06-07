@@ -6,7 +6,20 @@
 
 ---
 
-## 🔧 Últimos cambios (v9 — 7 junio)
+## 🔧 Últimos cambios (v10 — 7 junio)
+
+### 🖐️ Fase 2 — Dedo índice (raycast desde empty)
+
+**GLB actualizado:**
+- `assets/cursor/cursor_mano_abierta_ref_index.glb` (49.5KB) — incluye empty `ref_index_tip` en la punta del dedo índice
+- Sustituye al anterior `cursor_mano_abierta.glb`
+
+**Nuevas funciones:**
+- `getIndexFingerWorldPosition()` — lee la posición mundial del empty `ref_index_tip`
+- `getFingerScreenPosition()` — proyecta a coordenadas NDC de pantalla
+- `getDraggableUnderPointer()` y `getTableIntersect()` usan la posición del dedo primero, con fallback al ratón
+
+> ⚠️ **ROLLBACK TEMPORAL:** El GLB `cursor_mano_abierta_ref_index.glb` de Zet tenía escala 250× mayor que el original (BBox 13.36×20.29×8.05 vs 0.08×0.05×0.03). Se ha revertido al GLB original `cursor_mano_abierta.glb` hasta que Zet reexporte con la escala correcta. Las funciones de dedo (`getIndexFingerWorldPosition`) ya están en el código y funcionarán en cuanto se actualice el GLB.
 
 ### 🃏 Stacking Fase 1 — Apilamiento exacto de cartas
 Implementado siguiendo el plan de K (`plan-implementacion-stacking-y-dedo-2026-06-07.md`):
