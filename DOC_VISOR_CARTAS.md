@@ -1,6 +1,6 @@
 # 🃏 Visor Three.js — Documentación técnica
 
-> **Fecha:** 7 de junio de 2026 (v9 — Stacking Fase 1)  
+> **Fecha:** 7 de junio de 2026 (v10 — Stacking + Dedo índice)  
 > **Archivo principal:** `02_VISOR_WEB/visor-threejs.html`  
 > **Arquitectura:** Capas independientes + Launcher minimalista
 
@@ -19,7 +19,7 @@
 - `getFingerScreenPosition()` — proyecta a coordenadas NDC de pantalla
 - `getDraggableUnderPointer()` y `getTableIntersect()` usan la posición del dedo primero, con fallback al ratón
 
-> ⚠️ **ROLLBACK TEMPORAL:** El GLB `cursor_mano_abierta_ref_index.glb` de Zet tenía escala 250× mayor que el original (BBox 13.36×20.29×8.05 vs 0.08×0.05×0.03). Se ha revertido al GLB original `cursor_mano_abierta.glb` hasta que Zet reexporte con la escala correcta. Las funciones de dedo (`getIndexFingerWorldPosition`) ya están en el código y funcionarán en cuanto se actualice el GLB.
+> ⚠️ ~~ROLLBACK TEMPORAL~~ **✅ RESTAURADO:** Zet reexportó el GLB con la escala correcta (0.08×0.05×0.03) y el empty `ref_index_tip` en posición [-0.035, -0.014, -0.010]. El visor ya usa el GLB corregido. Ver tag `checkpoint/2026-06-07_fase2-restaurada-glb-corregido`.
 
 ### 🃏 Stacking Fase 1 — Apilamiento exacto de cartas
 Implementado siguiendo el plan de K (`plan-implementacion-stacking-y-dedo-2026-06-07.md`):
