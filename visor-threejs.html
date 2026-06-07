@@ -1444,10 +1444,12 @@ renderer.domElement.addEventListener('pointerup', () => {
 
 // ── Rueda del ratón: rotar carta o tapete seleccionado ──
 renderer.domElement.addEventListener('wheel', (e) => {
-  if (!selectedCard && !selectedTapete) return;
+  if (!selectedCard && !selectedTapete && !(selectedObject && selectedObject.userData.esGrupoLevantado)) return;
   e.preventDefault();
   const delta = e.deltaY > 0 ? -0.15 : 0.15; // ~8.6° por step
-  if (selectedCard) {
+  if (selectedObject && selectedObject.userData.esGrupoLevantado) {
+    selectedObject.rotation.y += delta;
+  } else if (selectedCard) {
     selectedCard.rotation.y += delta;
     if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
   }
