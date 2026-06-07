@@ -589,6 +589,29 @@ let isDragging = false;
 const locks = { tapete: true, cartas: false };
 let debugMode = false;
 
+// ── Mapa global de pilas ──
+const pilas = new Map();
+let contadorPilas = 0;
+
+function sincronizarPropsDesdeMapa(stackGroupId) {
+  const pila = pilas.get(stackGroupId);
+  if (!pila) return;
+  pila.forEach((carta, idx) => {
+    carta.userData.stackIndex = idx;
+    carta.userData.cardBelow = idx > 0 ? pila[idx - 1].userData.cardId : null;
+    carta.userData.cardAbove = idx < pila.length - 1 ? pila[idx + 1].userData.cardId : null;
+    carta.userData.isTopCard = idx === pila.length - 1;
+    carta.userData.stackGroupId = stackGroupId;
+    carta.userData.stackHeight = idx * carta.userData.thickness;
+    carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
+  });
+}
+
+function generarIdPila() {
+  contadorPilas++;
+  return 'pila_' + String(contadorPilas).padStart(4, '0');
+}
+
 const loader = new GLTFLoader();
 
 // ═══════════════════════════════════════════════
@@ -1181,6 +1204,89 @@ function cuadrarPila(carta, alinearRotacion = false) {
   }
 }
 
+// ═══════════════════════════════════════════════
+//  LEVANTAR — pick up (Capa 1)
+// ═══════════════════════════════════════════════
+
+let grupoLevantado = null;
+
+function levantarGrupo(cartas) {
+  if (!cartas || cartas.length === 0) return null;
+
+  const grupo = new THREE.Group();
+  grupo.userData.isCardGroup = true;
+  grupo.userData.esGrupoLevantado = true;
+  grupo.userData.draggable = true;
+  grupo.userData.cardIds = cartas.map(c => c.userData.cardId);
+
+  const cartaBase = cartas[0];
+  const baseX = cartaBase.position.x;
+  const baseZ = cartaBase.position.z;
+
+  const gid = cartaBase.userData.stackGroupId;
+  if (gid && pilas.has(gid)) {
+    const pila = pilas.get(gid);
+    for (const c of cartas) {
+      const idx = pila.indexOf(c);
+      if (idx !== -1) pila.splice(idx, 1);
+    }
+    if (pila.length === 0) {
+      pilas.delete(gid);
+    } else {
+      sincronizarPropsDesdeMapa(gid);
+    }
+  }
+
+  cartas.forEach((carta, idx) => {
+    scene.remove(carta);
+    grupo.add(carta);
+    carta.position.set(0, idx * carta.userData.thickness, 0);
+    carta.rotation.set(0, cartaBase.rotation.y, 0);
+  });
+
+  grupo.position.set(baseX, tableSurfaceY + CARD_OFFSET + CARD_LIFT, baseZ);
+  scene.add(grupo);
+  grupoLevantado = grupo;
+
+  return grupo;
+}
+
+function soltarGrupo(grupo) {
+  if (!grupo || !grupo.userData.esGrupoLevantado) return;
+
+  const cartas = [];
+  const grupoWorldPos = new THREE.Vector3();
+  grupo.getWorldPosition(grupoWorldPos);
+
+  while (grupo.children.length > 0) {
+    const carta = grupo.children[0];
+    const worldPos = new THREE.Vector3();
+    carta.getWorldPosition(worldPos);
+    grupo.remove(carta);
+    scene.add(carta);
+    carta.position.copy(worldPos);
+    cartas.push(carta);
+  }
+  scene.remove(grupo);
+
+  if (cartas.length === 0) return;
+
+  const nuevoGid = generarIdPila();
+  for (const carta of cartas) {
+    carta.userData.stackGroupId = nuevoGid;
+  }
+  pilas.set(nuevoGid, cartas);
+  sincronizarPropsDesdeMapa(nuevoGid);
+
+  for (const carta of cartas) {
+    ajustarSombraPorPila(carta);
+  }
+
+  if (selectedCard) {
+    actualizarBotonesPila(selectedCard);
+  }
+}
+
 // ── Pointer events ──
 renderer.domElement.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
@@ -1520,6 +1626,53 @@ document.querySelector('#btn-cuadrar').addEventListener('click', () => {
 });
 document.querySelector('#btn-apilar').addEventListener('click', () => {
   if (selectedCard) cuadrarPila(selectedCard, true);
+});
+
+// ── Botón Levantar (todo) ──
+document.querySelector('#btn-levantar').addEventListener('click', () => {
+  if (!selectedCard) return;
+  const gid = selectedCard.userData.stackGroupId;
+  if (!gid || !pilas.has(gid)) return;
+  const pila = pilas.get(gid);
+  const grupo = levantarGrupo([...pila]);
+  if (grupo) {
+    selectedObject = grupo;
+    controls.enabled = false;
+    clearSelection();
+  }
+});
+
+// ── Botón Levantar N ──
+document.querySelector('#btn-levantar-n').addEventListener('click', () => {
+  if (!selectedCard) return;
+  const gid = selectedCard.userData.stackGroupId;
+  if (!gid || !pilas.has(gid)) return;
+  const pila = pilas.get(gid);
+  const nInput = document.querySelector('#levantar-n-number');
+  nInput.max = pila.length;
+  nInput.value = Math.min(parseInt(nInput.value) || pila.length, pila.length);
+  document.querySelector('#levantar-n-input').style.display = 'flex';
+});
+
+document.querySelector('#btn-levantar-n-confirm').addEventListener('click', () => {
+  if (!selectedCard) return;
+  const gid = selectedCard.userData.stackGroupId;
+  if (!gid || !pilas.has(gid)) return;
+  const pila = pilas.get(gid);
+  const n = parseInt(document.querySelector('#levantar-n-number').value) || pila.length;
+  const nReal = Math.min(n, pila.length);
+  const cartasArriba = pila.slice(-nReal);
+  const grupo = levantarGrupo([...cartasArriba]);
+  if (grupo) {
+    selectedObject = grupo;
+    controls.enabled = false;
+    clearSelection();
+  }
+  document.querySelector('#levantar-n-input').style.display = 'none';
+});
+
+document.querySelector('#btn-levantar-n-cancel').addEventListener('click', () => {
+  document.querySelector('#levantar-n-input').style.display = 'none';
 });
 
 // ── Doble tap en el canvas para voltear carta seleccionada ──
