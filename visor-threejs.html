@@ -115,8 +115,8 @@ canvas{cursor:none!important}
   <div class="toggle-row active" data-layer="mesa">
     <span class="toggle-switch on"></span> Mesa
   </div>
-  <div class="toggle-row" data-layer="tapete">
-    <span class="toggle-switch"></span> Tapete
+  <div class="toggle-row active" data-layer="tapete">
+    <span class="toggle-switch on"></span> Tapete
   </div>
   <div class="toggle-row" data-layer="cartas">
     <span class="toggle-switch"></span> Cartas
@@ -124,7 +124,7 @@ canvas{cursor:none!important}
 
   <div class="section" style="margin-top:2px">🔒 Bloquear</div>
   <div class="lock-row">
-    <span class="lock-btn" data-lock="tapete" title="Bloquear tapete">🔓</span>
+    <span class="lock-btn locked" data-lock="tapete" title="Bloquear tapete">🔒</span>
     <span class="lock-label">Tapete</span>
     <span class="lock-btn" data-lock="cartas" title="Bloquear cartas">🔓</span>
     <span class="lock-label">Cartas</span>
@@ -405,7 +405,7 @@ dl.castShadow = true;
 dl.shadow.mapSize.width = 1024;
 dl.shadow.mapSize.height = 1024;
 dl.shadow.bias = -0.0005;
-dl.shadow.normalBias = 0.02;
+dl.shadow.normalBias = 0.005;  // reducido para no perder detalle con grosor 0.0003
 scene.add(dl);
 const fl = new THREE.DirectionalLight(0x8888ff, 0.6);
 fl.position.set(-2, 3, -3);
@@ -586,7 +586,7 @@ let selectedCard = null; // carta seleccionada (no arrastrada)
 let selectedTapete = null; // tapete seleccionado
 let isDragging = false;
 
-const locks = { tapete: false, cartas: false };
+const locks = { tapete: true, cartas: false };
 let debugMode = false;
 
 const loader = new GLTFLoader();
@@ -626,6 +626,9 @@ function cargarModelo(url) {
     controls.reset();
 
     document.querySelector('#status').innerHTML = '<span class=ok>●</span> Listo';
+    // Auto-cargar tapete (activo por defecto)
+    layers.tapete.visible = true;
+    cargarTapete(currentTapete);
   }, (xhr) => {
     const p = Math.round((xhr.loaded / xhr.total) * 100);
     if (p < 100) document.querySelector('#status').innerHTML = `<span class=loading>●</span> ${p}%`;
@@ -742,7 +745,7 @@ function cargarBaraja(deckKey) {
       m.userData.cardId = deckKey + '_' + m.userData.rank + '_' + m.userData.suit;
 
       // Propiedades de stacking (Fase 1)
-      m.userData.thickness = 0.002;
+      m.userData.thickness = 0.0003;  // 0.3mm — grosor real de carta de póker
       m.userData.stackable = true;
       m.userData.snapRadius = 0.04;
       m.userData.stackIndex = 0;
@@ -1376,11 +1379,10 @@ document.querySelectorAll('.mesa-btn').forEach(btn => {
     btn.classList.add('active');
     limpiarTapete();
     limpiarCartas();
-    setLayer('tapete', false);
     setLayer('cartas', false);
     document.querySelectorAll('.toggle-row').forEach(r => {
       if (r.dataset.layer === 'mesa') { r.classList.add('active'); r.querySelector('.toggle-switch').classList.add('on'); }
-      if (r.dataset.layer === 'tapete') { r.classList.remove('active'); r.querySelector('.toggle-switch').classList.remove('on'); }
+      if (r.dataset.layer === 'tapete') { r.classList.add('active'); r.querySelector('.toggle-switch').classList.add('on'); }
       if (r.dataset.layer === 'cartas') { r.classList.remove('active'); r.querySelector('.toggle-switch').classList.remove('on'); }
     });
     document.querySelector('#tapete-options').classList.remove('active');
