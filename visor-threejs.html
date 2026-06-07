@@ -739,6 +739,17 @@ function cargarBaraja(deckKey) {
       m.userData.family = deckKey;
       m.userData.cardId = deckKey + '_' + m.userData.rank + '_' + m.userData.suit;
 
+      // Propiedades de stacking (Fase 1)
+      m.userData.thickness = 0.002;
+      m.userData.stackable = true;
+      m.userData.snapRadius = 0.04;
+      m.userData.stackIndex = 0;
+      m.userData.stackHeight = 0;
+      m.userData.cardBelow = null;
+      m.userData.cardAbove = null;
+      m.userData.stackGroupId = null;
+      m.userData.isTopCard = true;
+
       // Escalar carta
       m.scale.set(CARD_SCALE, CARD_SCALE, CARD_SCALE);
 
@@ -785,6 +796,19 @@ function cargarBaraja(deckKey) {
 function posicionarCartas(mode) {
   const n = cartas.length;
   if (n === 0) return;
+
+  // Resetear estado de stacking al reposicionar
+  cartas.forEach(c => {
+    c.userData.stackIndex = 0;
+    c.userData.stackHeight = 0;
+    c.userData.cardBelow = null;
+    c.userData.cardAbove = null;
+    c.userData.isTopCard = true;
+    if (c.userData.shadow) {
+      c.userData.shadow.material.opacity = 0.25;
+      c.userData.shadow.scale.set(1, 1, 1);
+    }
+  });
 
   if (mode === 'row') {
     // 4 filas de N cartas cada una (N=13 para poker, 12 para espanola)
@@ -990,6 +1014,81 @@ function selectTapete(tapete) {
   scene.add(tapeteHighlight);
 }
 
+// ═══════════════════════════════════════════════
+//  FASE 1 — STACKING (apilamiento de cartas)
+// ═══════════════════════════════════════════════
+
+function detectarStack(carta) {
+  const snap = carta.userData.snapRadius || 0.04;
+  let cartaSuperior = null;
+  let maxStack = -1;
+
+  for (const otra of cartas) {
+    if (otra === carta || !otra.parent) continue;
+    const dx = carta.position.x - otra.position.x;
+    const dz = carta.position.z - otra.position.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+    if (dist < snap && (otra.userData.stackIndex > maxStack)) {
+      cartaSuperior = otra;
+      maxStack = otra.userData.stackIndex;
+    }
+  }
+
+  if (cartaSuperior) {
+    const newIdx = cartaSuperior.userData.stackIndex + 1;
+    carta.userData.stackIndex = newIdx;
+    carta.userData.cardBelow = cartaSuperior.userData.cardId;
+    carta.userData.isTopCard = true;
+    cartaSuperior.userData.cardAbove = carta.userData.cardId;
+    cartaSuperior.userData.isTopCard = false;
+  } else {
+    carta.userData.stackIndex = 0;
+    carta.userData.cardBelow = null;
+    carta.userData.isTopCard = true;
+  }
+
+  carta.userData.stackHeight = carta.userData.stackIndex * carta.userData.thickness;
+  carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
+  ajustarSombraPorPila(carta);
+}
+
+function colapsarPilaAlAgarrar(carta) {
+  for (const otra of cartas) {
+    if (otra === carta || !otra.parent) continue;
+    if (otra.userData.cardBelow === carta.userData.cardId) {
+      otra.userData.stackIndex -= 1;
+      otra.userData.stackHeight = otra.userData.stackIndex * otra.userData.thickness;
+      otra.position.y = tableSurfaceY + CARD_OFFSET + otra.userData.stackHeight;
+      otra.userData.cardBelow = carta.userData.cardBelow;
+      colapsarPilaArriba(otra);
+      ajustarSombraPorPila(otra);
+    }
+  }
+  carta.userData.cardAbove = null;
+  carta.userData.cardBelow = null;
+  carta.userData.isTopCard = true;
+}
+
+function colapsarPilaArriba(carta) {
+  for (const otra of cartas) {
+    if (otra.userData.cardBelow === carta.userData.cardId) {
+      otra.userData.stackIndex = carta.userData.stackIndex + 1;
+      otra.userData.stackHeight = otra.userData.stackIndex * otra.userData.thickness;
+      otra.position.y = tableSurfaceY + CARD_OFFSET + otra.userData.stackHeight;
+      colapsarPilaArriba(otra);
+      ajustarSombraPorPila(otra);
+    }
+  }
+}
+
+function ajustarSombraPorPila(carta) {
+  const s = carta.userData.shadow;
+  if (!s) return;
+  const idx = carta.userData.stackIndex || 0;
+  s.material.opacity = Math.min(0.25 + idx * 0.08, 0.6);
+  s.scale.set(1, 1, 1);
+}
+
 // ── Pointer events ──
 renderer.domElement.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
@@ -1006,6 +1105,8 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
     isDragging = false;
     controls.enabled = false;
     // Levantar ligeramente (preparado para posible drag)
+    // Si estaba en una pila, colapsar primero
+    colapsarPilaAlAgarrar(obj);
     obj.position.y = tableSurfaceY + CARD_OFFSET + CARD_LIFT;
     const s = obj.userData.shadow;
     if (s) { s.material.opacity = 0.4; s.scale.set(1.3, 1.3, 1); }
@@ -1072,9 +1173,7 @@ renderer.domElement.addEventListener('pointerup', () => {
   if (!selectedObject) return;
   
   if (selectedObject.userData.isCard) {
-    selectedObject.position.y = tableSurfaceY + CARD_OFFSET;
-    const s = selectedObject.userData.shadow;
-    if (s) { s.material.opacity = 0.25; s.scale.set(1, 1, 1); }
+    detectarStack(selectedObject);
     // Si no hubo arrastre (fue un click), mantener seleccionada
     if (!isDragging) {
       selectCard(selectedObject);
