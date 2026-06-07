@@ -1281,6 +1281,8 @@ function levantarGrupo(cartas) {
 function soltarGrupo(grupo) {
   if (!grupo || !grupo.userData.esGrupoLevantado) return;
 
+  grupo.updateWorldMatrix(true, true);  // ← fuerza recálculo matrices mundo
+
   const cartas = [];
   const grupoWorldPos = new THREE.Vector3();
   grupo.getWorldPosition(grupoWorldPos);
@@ -1292,6 +1294,7 @@ function soltarGrupo(grupo) {
     grupo.remove(carta);
     scene.add(carta);
     carta.position.copy(worldPos);
+    carta.updateMatrix();               // ← fuerza matriz local
     cartas.push(carta);
   }
   scene.remove(grupo);
