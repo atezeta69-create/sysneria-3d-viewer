@@ -183,6 +183,7 @@ canvas{cursor:none!important}
   <div class=toggle-row id=debug-toggle>
     <span class="toggle-switch"></span> Identidad de carta
   </div>
+  <button id="btn-descargar-logs" style="display:block;width:calc(100% - 8px);margin:6px 0 0 8px;background:rgba(200,100,100,0.08);border:1px solid rgba(200,100,100,0.15);color:#cc8888;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit">📋 Descargar Logs</button>
 </div>
 </div>
 
@@ -294,6 +295,17 @@ const CARD_SCALE = 0.8;
 const CARD_LIFT = 0.015;
 const TAPETE_THICKNESS = 0.003; // grosor del tapete (~3mm)
 const CARD_OFFSET = TAPETE_THICKNESS / 2 + 0.001; // cartas justo encima del tapete
+
+// ── Sistema de logging interno ──
+window.__logBuffer = [];
+const _origLog = console.log;
+console.log = function(...args) {
+  _origLog.apply(console, args);
+  const msg = args.map(a =>
+    typeof a === 'object' ? JSON.stringify(a) : String(a)
+  ).join(' ');
+  window.__logBuffer.push(msg);
+};
 
 // ═══════════════════════════════════════════════
 //  DORSO (textura trasera de las cartas)
@@ -620,11 +632,8 @@ function sincronizarPropsDesdeMapa(stackGroupId) {
 
     console.log('  Carta', idx, ': Y', yAnterior, '->', carta.position.y);
 
-  // Forzar actualizacion de matriz tras cambiar Y
+  // Forzar actualización de matriz tras cambiar Y
     carta.updateMatrix();
-    // Fijar matrixWorld directamente para evitar calculo incorrecto del render loop
-    carta.matrixWorld.copy(carta.matrix);
-    carta.matrixWorldNeedsUpdate = false;
   });
 }
 
@@ -1759,6 +1768,18 @@ document.querySelector('#btn-levantar-n-confirm').addEventListener('click', () =
 
 document.querySelector('#btn-levantar-n-cancel').addEventListener('click', () => {
   document.querySelector('#levantar-n-input').style.display = 'none';
+});
+
+// ── Descargar logs de sesión ──
+document.querySelector('#btn-descargar-logs').addEventListener('click', () => {
+  const texto = window.__logBuffer.join('\n');
+  const blob = new Blob([texto], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `logs-sesion-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
 });
 
 // ── Doble tap en el canvas para voltear carta seleccionada ──
