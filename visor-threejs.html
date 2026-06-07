@@ -604,8 +604,12 @@ let contadorPilas = 0;
 
 function sincronizarPropsDesdeMapa(stackGroupId) {
   const pila = pilas.get(stackGroupId);
-  if (!pila) return;
+  console.log('sincronizarPropsDesdeMapa llamado:', stackGroupId,
+    '| encontrado:', !!pila, '| length:', pila?.length);
+  if (!pila) { console.log('⚠️ PILA NO ENCONTRADA en Map'); return; }
+
   pila.forEach((carta, idx) => {
+    const yAnterior = carta.position.y;
     carta.userData.stackIndex = idx;
     carta.userData.cardBelow = idx > 0 ? pila[idx - 1].userData.cardId : null;
     carta.userData.cardAbove = idx < pila.length - 1 ? pila[idx + 1].userData.cardId : null;
@@ -613,6 +617,14 @@ function sincronizarPropsDesdeMapa(stackGroupId) {
     carta.userData.stackGroupId = stackGroupId;
     carta.userData.stackHeight = idx * carta.userData.thickness;
     carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
+
+    console.log('  Carta', idx, ': Y', yAnterior, '->', carta.position.y);
+
+  // Forzar actualizacion de matriz tras cambiar Y
+    carta.updateMatrix();
+    // Fijar matrixWorld directamente para evitar calculo incorrecto del render loop
+    carta.matrixWorld.copy(carta.matrix);
+    carta.matrixWorldNeedsUpdate = false;
   });
 }
 
@@ -1269,9 +1281,11 @@ function levantarGrupo(cartas) {
     grupo.add(carta);
     carta.position.set(0, idx * carta.userData.thickness, 0);
     carta.rotation.set(0, cartaBase.rotation.y, 0);
+    carta.updateMatrix();  // forzar matriz tras cambiar pos/rot
   });
 
   grupo.position.set(baseX, tableSurfaceY + CARD_OFFSET + CARD_LIFT, baseZ);
+  grupo.updateMatrix();
   scene.add(grupo);
   grupoLevantado = grupo;
 
@@ -1281,32 +1295,54 @@ function levantarGrupo(cartas) {
 function soltarGrupo(grupo) {
   if (!grupo || !grupo.userData.esGrupoLevantado) return;
 
-  grupo.updateWorldMatrix(true, true);  // ← fuerza recálculo matrices mundo
+  console.log('\n=== SOLTAR GRUPO ===');
+  console.log('tableSurfaceY:', tableSurfaceY, '| CARD_OFFSET:', CARD_OFFSET, '| CARD_LIFT:', CARD_LIFT);
+  console.log('Grupo position:', grupo.position.y, '| children:', grupo.children.length);
+
+  grupo.updateWorldMatrix(true, true);
 
   const cartas = [];
   const grupoWorldPos = new THREE.Vector3();
   grupo.getWorldPosition(grupoWorldPos);
+  console.log('Grupo worldPos:', grupoWorldPos.y);
 
   while (grupo.children.length > 0) {
     const carta = grupo.children[0];
-    const worldPos = new THREE.Vector3();
-    carta.getWorldPosition(worldPos);
-    grupo.remove(carta);
-    scene.add(carta);
-    carta.position.copy(worldPos);
-    carta.updateMatrix();               // ← fuerza matriz local
+
+    console.log('Carta', carta.userData.cardId,
+      'local position:', carta.position.y,
+      'thickness:', carta.userData.thickness,
+      'parent:', carta.parent ? carta.parent.type : 'none');
+
+    // scene.attach() preserva la transformacion mundial automaticamente
+    // (updateWorldMatrix + remove + add + set local position/quaternion/scale)
+    scene.attach(carta);
+
+    console.log('  -> attach OK, nuevo position:', carta.position.y);
     cartas.push(carta);
   }
   scene.remove(grupo);
 
-  if (cartas.length === 0) return;
+  if (cartas.length === 0) { console.log('⚠️ cartas vacio, return'); return; }
 
   const nuevoGid = generarIdPila();
+  console.log('nuevoGid:', nuevoGid, '| cartas en array:', cartas.length);
+
   for (const carta of cartas) {
     carta.userData.stackGroupId = nuevoGid;
   }
   pilas.set(nuevoGid, cartas);
+
+  console.log('pilas.has(nuevoGid)?', pilas.has(nuevoGid), '| len:', pilas.get(nuevoGid)?.length);
+
   sincronizarPropsDesdeMapa(nuevoGid);
+
+  cartas.forEach((c, i) => {
+    console.log('  Carta', i, 'Y despues de sincronizar:', c.position.y,
+      '| stackIndex:', c.userData.stackIndex,
+      '| stackHeight:', c.userData.stackHeight,
+      '| thickness:', c.userData.thickness);
+  });
 
   for (const carta of cartas) {
     ajustarSombraPorPila(carta);
@@ -1315,6 +1351,7 @@ function soltarGrupo(grupo) {
   if (selectedCard) {
     actualizarBotonesPila(selectedCard);
   }
+  console.log('=== FIN SOLTAR GRUPO ===\n');
 }
 
 // ── Pointer events ──
