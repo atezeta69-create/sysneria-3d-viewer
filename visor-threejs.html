@@ -1345,6 +1345,13 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
     controls.enabled = false;
     obj.position.y += CARD_LIFT * 2;
     renderer.domElement.style.cursor = 'grabbing';
+  } else if (obj.userData.esGrupoLevantado) {
+    // Grupo levantado: arrastrar como bloque
+    selectedObject = obj;
+    isDragging = false;
+    controls.enabled = false;
+    renderer.domElement.style.cursor = 'grabbing';
+    startGrabCursor();
   }
   e.preventDefault();
 });
