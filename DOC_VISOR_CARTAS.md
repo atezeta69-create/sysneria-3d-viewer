@@ -1,12 +1,25 @@
 # 🃏 Visor Three.js — Documentación técnica
 
-> **Fecha:** 2 de junio de 2026 (v8)  
+> **Fecha:** 7 de junio de 2026 (v9 — Stacking Fase 1)  
 > **Archivo principal:** `02_VISOR_WEB/visor-threejs.html`  
 > **Arquitectura:** Capas independientes + Launcher minimalista
 
 ---
 
-## 🔧 Últimos cambios (v7 — 2 junio)
+## 🔧 Últimos cambios (v9 — 7 junio)
+
+### 🃏 Stacking Fase 1 — Apilamiento exacto de cartas
+Implementado siguiendo el plan de K (`plan-implementacion-stacking-y-dedo-2026-06-07.md`):
+
+- **F1.1** — Propiedades de stacking en userData: `thickness: 0.002`, `snapRadius: 0.04`, `stackIndex`, `cardBelow`, `cardAbove`, `isTopCard`
+- **F1.2** — `detectarStack()`: al soltar carta en pointerup, busca la más cercana dentro del snapRadius y se apila encima con altura incremental (stackIndex × thickness)
+- **F1.3** — `colapsarPilaAlAgarrar()` + `colapsarPilaArriba()` recursiva: al agarrar carta del medio, las superiores bajan automáticamente
+- **F1.4** — Sombra variable: opacidad = min(0.25 + stackIndex × 0.08, 0.6)
+- **Stack reset** en `posicionarCartas()` al cambiar entre modos (fan/row/scatter)
+
+### 🃏 Baraja española dividida
+- Separada en `espanola_40/` (As-7 + Sota, Caballo, Rey) y `espanola_48/` (incluye 8, 9, 10)
+- 4 barajas seleccionables: Poker Normal, Poker Cartoon, Española 40, Española 48
 
 ### 🖐️ Cursor Mano 3D
 - **3 modelos GLB** (~58 KB, ~1.200 vértices) en `assets/cursor/`:
@@ -103,7 +116,8 @@
 |--------|----------|------|-------|
 | Poker Normal | 52 GLBs | ~30 MB | As, 2-10, Jota, Reina, Rey × 4 palos |
 | Poker Cartoon | 52 GLBs | ~22 MB | Estilo caricatura |
-| Española | 48 GLBs | ~1.7 MB | 1-9, Sota, Caballo, Rey × 4 palos (sirve para 40 quitando 8 y 9) |
+| Española 40 | 40 GLBs | ~1.4 MB | As-7, Sota, Caballo, Rey × 4 palos |
+| Española 48 | 48 GLBs | ~1.7 MB | As-9, Sota, Caballo, Rey × 4 palos |
 
 ### 🟫 Tapetes
 
