@@ -1120,15 +1120,28 @@ function detectarStack(carta) {
     carta.userData.isTopCard = true;
     cartaSuperior.userData.cardAbove = carta.userData.cardId;
     cartaSuperior.userData.isTopCard = false;
+    // Asignar stackGroupId y registrar en el Map
+    const gid = cartaSuperior.userData.stackGroupId || generarIdPila();
+    carta.userData.stackGroupId = gid;
+    cartaSuperior.userData.stackGroupId = gid;
+    migrarPilaAlMapa(gid);
   } else {
     carta.userData.stackIndex = 0;
     carta.userData.cardBelow = null;
     carta.userData.isTopCard = true;
+    carta.userData.stackGroupId = undefined;
   }
 
   carta.userData.stackHeight = carta.userData.stackIndex * carta.userData.thickness;
   carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
   ajustarSombraPorPila(carta);
+}
+
+function migrarPilaAlMapa(stackGroupId) {
+  const pila = cartas.filter(c => c.userData.stackGroupId === stackGroupId && c.parent);
+  pila.sort((a, b) => a.userData.stackIndex - b.userData.stackIndex);
+  pilas.set(stackGroupId, pila);
+  sincronizarPropsDesdeMapa(stackGroupId);
 }
 
 function colapsarPilaAlAgarrar(carta) {
@@ -1384,14 +1397,24 @@ renderer.domElement.addEventListener('pointerup', () => {
   isPointerDown = false;
   if (!selectedObject) return;
   
-  if (selectedObject.userData.isCard) {
-    detectarStack(selectedObject);
-    actualizarBotonesPila(selectedObject);
-    // Si no hubo arrastre (fue un click), mantener seleccionada
-    if (!isDragging) {
-      selectCard(selectedObject);
-    }
-  } else if (selectedObject.userData.isTapete) {
+    if (selectedObject.userData.isCard) {
+      detectarStack(selectedObject);
+      actualizarBotonesPila(selectedObject);
+      // Si no hubo arrastre (fue un click), mantener seleccionada
+      if (!isDragging) {
+        selectCard(selectedObject);
+      }
+    } else if (selectedObject.userData.esGrupoLevantado) {
+      soltarGrupo(selectedObject);
+      // La seleccion vuelve a la carta de arriba del nuevo grupo
+      const nuevoGid = selectedObject.userData.cardIds?.[selectedObject.userData.cardIds.length - 1];
+      if (nuevoGid) {
+        const nuevaCarta = cartas.find(c => c.userData.cardId === nuevoGid);
+        if (nuevaCarta) {
+          selectCard(nuevaCarta);
+        }
+      }
+    } else if (selectedObject.userData.isTapete) {
     selectedObject.position.y = tableSurfaceY;
     // Si no hubo arrastre, mantener seleccionado
     if (!isDragging) {
