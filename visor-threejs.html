@@ -162,6 +162,7 @@ canvas{cursor:none!important}
     <button id="flip-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Voltear carta (doble tap o clic derecho)">↻ Voltear</button>
     <button id="rot-left-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Girar izquierda (R en teclado)">↺</button>
     <button id="rot-right-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Girar derecha (Shift+R en teclado)">↻</button>
+    <button id="btn-cuadrar" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Alinear cartas de la pila (Q)">⬜ Cuadrar</button>
   </div>
 
   <div class=section style="margin-top:12px">🔍 Zoom</div>
@@ -961,6 +962,7 @@ function clearSelection() {
   selectedTapete = null;
   controls.enableZoom = true;
   document.querySelector('#card-actions').style.display = 'none';
+  document.querySelector('#btn-cuadrar').style.display = 'none';
   document.querySelector('#debug-overlay').style.display = 'none';
 }
 
@@ -985,6 +987,11 @@ function selectCard(carta) {
   highlightLines.position.y += 0.001;
   scene.add(highlightLines);
   document.querySelector('#card-actions').style.display = 'flex';
+  // Mostrar boton cuadrar si la carta esta en una pila
+  const enPila = carta.userData.stackIndex > 0 ||
+                 carta.userData.cardBelow !== null ||
+                 carta.userData.cardAbove !== null;
+  document.querySelector('#btn-cuadrar').style.display = enPila ? 'inline-block' : 'none';
   if (debugMode) actualizarDebugOverlay();
 }
 
@@ -1123,6 +1130,38 @@ function ajustarSombraPorPila(carta) {
   const idx = carta.userData.stackIndex || 0;
   s.material.opacity = Math.min(0.25 + idx * 0.08, 0.6);
   s.scale.set(1, 1, 1);
+}
+
+// ═══════════════════════════════════════════════
+//  CUADRAR — Alinear cartas de una pila (Capa 1)
+// ═══════════════════════════════════════════════
+// NOTA: v1 instantáneo. En v2+ se añadirá animación
+// lerp suave cuando tengamos sistema de tweens.
+function cuadrarPila(carta) {
+  let base = carta;
+  let maxIter = 52;
+  while (base.userData.cardBelow !== null && maxIter-- > 0) {
+    base = cartas.find(c => c.userData.cardId === base.userData.cardBelow);
+    if (!base) break;
+  }
+  if (!base) return;
+
+  const targetX = base.position.x;
+  const targetZ = base.position.z;
+
+  let actual = base;
+  while (actual) {
+    // ⚡ En v2+: animatePosition(actual, targetX, targetZ, 0.2)
+    actual.position.x = targetX;
+    actual.position.z = targetZ;
+
+    if (actual === selectedCard && highlightLines) {
+      highlightLines.position.x = targetX;
+      highlightLines.position.z = targetZ;
+    }
+
+    actual = cartas.find(c => c.userData.cardId === actual.userData.cardAbove);
+  }
 }
 
 // ── Pointer events ──
@@ -1283,6 +1322,12 @@ document.addEventListener('keydown', (e) => {
   // F: flip de carta seleccionada
   if ((e.key === 'f' || e.key === 'F') && selectedCard) {
     flipCard();
+    e.preventDefault();
+  }
+
+  // Q: cuadrar pila
+  if ((e.key === 'q' || e.key === 'Q') && selectedCard) {
+    cuadrarPila(selectedCard);
     e.preventDefault();
   }
 });
@@ -1452,6 +1497,9 @@ document.querySelector('#rot-right-btn').addEventListener('click', () => {
   if (!selectedCard) return;
   selectedCard.rotation.y += 0.26;
   if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
+});
+document.querySelector('#btn-cuadrar').addEventListener('click', () => {
+  if (selectedCard) cuadrarPila(selectedCard);
 });
 
 // ── Doble tap en el canvas para voltear carta seleccionada ──
