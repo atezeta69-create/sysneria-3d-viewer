@@ -140,7 +140,8 @@ canvas{cursor:none!important}
   <div class="deck-select" id="deck-options">
     <button class="deck-btn active" data-deck="poker_normal">♠ Poker</button>
     <button class="deck-btn" data-deck="poker_cartoon">😄 Cartoon</button>
-    <button class="deck-btn" data-deck="espanola">🇪🇸 Española</button>
+    <button class="deck-btn" data-deck="espanola_40">🇪🇸 Española 40</button>
+    <button class="deck-btn" data-deck="espanola_48">🇪🇸 Española 48</button>
   </div>
   <div class=section style=margin-top:2px>🎴 Dorsos</div>
   <div class=source-select id=dorso-source-options>
@@ -166,10 +167,21 @@ canvas{cursor:none!important}
   <div class=section style="margin-top:12px">🔍 Zoom</div>
   <input type=range id=zoomSlider min=0.5 max=8 step=0.1 value=2.5>
   <div class=zoom-labels><span>3D</span><span>▼ cenital</span></div>
+
+  <div class=section style="margin-top:8px">🐛 Debug</div>
+  <div class=toggle-row id=debug-toggle>
+    <span class="toggle-switch"></span> Identidad de carta
+  </div>
 </div>
 </div>
 
 <div id=status><span class=ok>●</span> Mesa limpia</div>
+
+<!-- Debug overlay: muestra identidad de carta seleccionada -->
+<div id=debug-overlay style="display:none; position:fixed; bottom:20px; left:20px; background:rgba(0,0,0,0.8); color:#c8b898; padding:10px 16px; border-radius:8px; font-family:monospace; font-size:13px; line-height:1.6; border:1px solid rgba(200,184,152,0.2); z-index:1000; min-width:200px; pointer-events:none">
+  <div style="font-size:11px; color:#887a60; margin-bottom:4px">🐛 DEBUG — Identidad de carta</div>
+  <div id=debug-card-id></div>
+</div>
 
 <script type=importmap>
 {
@@ -204,9 +216,16 @@ const DECKS = {
     suits: ['Corazones','Diamantes','Picas','Treboles'],
     prefix: 'Carta_Poker_Cartoon_',
   },
-  espanola: {
-    label: 'Española',
-    path: 'assets/cartas/espanola/',
+  espanola_40: {
+    label: 'Española 40',
+    path: 'assets/cartas/espanola_40/',
+    ranks: ['As','2','3','4','5','6','7','Sota','Caballo','Rey'],
+    suits: ['Bastos','Copas','Espadas','Oros'],
+    prefix: 'Carta_Espanola_',
+  },
+  espanola_48: {
+    label: 'Española 48',
+    path: 'assets/cartas/espanola_48/',
     ranks: ['As','2','3','4','5','6','7','8','9','Sota','Caballo','Rey'],
     suits: ['Bastos','Copas','Espadas','Oros'],
     prefix: 'Carta_Espanola_',
@@ -566,6 +585,7 @@ let selectedTapete = null; // tapete seleccionado
 let isDragging = false;
 
 const locks = { tapete: false, cartas: false };
+let debugMode = false;
 
 const loader = new GLTFLoader();
 
@@ -711,6 +731,13 @@ function cargarBaraja(deckKey) {
       m.userData.draggable = true;
       m.userData.cardIndex = index;
       m.userData.deck = deckKey;
+      const numRanks = deck.ranks.length;
+      const suitIdx = Math.floor(index / numRanks);
+      const rankIdx = index % numRanks;
+      m.userData.suit = deck.suits[suitIdx];
+      m.userData.rank = deck.ranks[rankIdx];
+      m.userData.family = deckKey;
+      m.userData.cardId = deckKey + '_' + m.userData.rank + '_' + m.userData.suit;
 
       // Escalar carta
       m.scale.set(CARD_SCALE, CARD_SCALE, CARD_SCALE);
@@ -896,6 +923,7 @@ function clearSelection() {
   selectedTapete = null;
   controls.enableZoom = true;
   document.querySelector('#card-actions').style.display = 'none';
+  document.querySelector('#debug-overlay').style.display = 'none';
 }
 
 function selectCard(carta) {
@@ -919,6 +947,25 @@ function selectCard(carta) {
   highlightLines.position.y += 0.001;
   scene.add(highlightLines);
   document.querySelector('#card-actions').style.display = 'flex';
+  if (debugMode) actualizarDebugOverlay();
+}
+
+function actualizarDebugOverlay() {
+  const c = selectedCard;
+  if (!c || !debugMode || !c.userData) { document.querySelector('#debug-overlay').style.display = 'none'; return; }
+  const ud = c.userData;
+  let labelRank = ud.rank || '?';
+  let labelSuit = ud.suit || '?';
+  let labelFamily = '';
+  if (ud.family === 'poker_normal') labelFamily = 'Poker';
+  else if (ud.family === 'poker_cartoon') labelFamily = 'Cartoon';
+  else if (ud.family === 'espanola_40') labelFamily = 'Española 40';
+  else if (ud.family === 'espanola_48') labelFamily = 'Española 48';
+  const id = ud.cardId || '?';
+  document.querySelector('#debug-overlay').style.display = 'block';
+  document.querySelector('#debug-card-id').innerHTML =
+    `<b>${labelRank} de ${labelSuit}</b><br>` +
+    `<span style="font-size:11px;color:#887a60">ID: ${id}</span>`;
 }
 
 function selectTapete(tapete) {
@@ -1178,6 +1225,19 @@ document.querySelectorAll('.toggle-row').forEach(row => {
     document.querySelector('#dorso-dropdown').classList.toggle('active', layer === 'cartas' && show);
     document.querySelector('#card-options').classList.toggle('active', layer === 'cartas' && show);
   });
+});
+
+// ── Debug toggle ──
+document.querySelector('#debug-toggle').addEventListener('click', () => {
+  const sw = document.querySelector('#debug-toggle .toggle-switch');
+  debugMode = !debugMode;
+  sw.classList.toggle('on', debugMode);
+  document.querySelector('#debug-toggle').classList.toggle('active', debugMode);
+  if (!debugMode || !selectedCard) {
+    document.querySelector('#debug-overlay').style.display = 'none';
+  } else {
+    actualizarDebugOverlay();
+  }
 });
 
 // ── Selector de baraja ──
