@@ -989,12 +989,7 @@ function selectCard(carta) {
   highlightLines.position.y += 0.001;
   scene.add(highlightLines);
   document.querySelector('#card-actions').style.display = 'flex';
-  // Mostrar boton cuadrar si la carta esta en una pila
-  const enPila = carta.userData.stackIndex > 0 ||
-                 carta.userData.cardBelow !== null ||
-                 carta.userData.cardAbove !== null;
-  document.querySelector('#btn-cuadrar').style.display = enPila ? 'inline-block' : 'none';
-  document.querySelector('#btn-apilar').style.display = enPila ? 'inline-block' : 'none';
+  actualizarBotonesPila(carta);
   if (debugMode) actualizarDebugOverlay();
 }
 
@@ -1135,6 +1130,14 @@ function ajustarSombraPorPila(carta) {
   s.scale.set(1, 1, 1);
 }
 
+function actualizarBotonesPila(carta) {
+  const enPila = carta.userData.stackIndex > 0 ||
+                 carta.userData.cardBelow !== null ||
+                 carta.userData.cardAbove !== null;
+  document.querySelector('#btn-cuadrar').style.display = enPila ? 'inline-block' : 'none';
+  document.querySelector('#btn-apilar').style.display = enPila ? 'inline-block' : 'none';
+}
+
 // ═══════════════════════════════════════════════
 //  CUADRAR — Alinear cartas de una pila (Capa 1)
 // ═══════════════════════════════════════════════
@@ -1260,6 +1263,7 @@ renderer.domElement.addEventListener('pointerup', () => {
   
   if (selectedObject.userData.isCard) {
     detectarStack(selectedObject);
+    actualizarBotonesPila(selectedObject);
     // Si no hubo arrastre (fue un click), mantener seleccionada
     if (!isDragging) {
       selectCard(selectedObject);
