@@ -163,6 +163,7 @@ canvas{cursor:none!important}
     <button id="rot-left-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Girar izquierda (R en teclado)">↺</button>
     <button id="rot-right-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Girar derecha (Shift+R en teclado)">↻</button>
     <button id="btn-cuadrar" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Alinear cartas de la pila (Q)">⬜ Cuadrar</button>
+    <button id="btn-apilar" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Alinear posicion y rotacion de la pila">⬛ Apilar</button>
   </div>
 
   <div class=section style="margin-top:12px">🔍 Zoom</div>
@@ -963,6 +964,7 @@ function clearSelection() {
   controls.enableZoom = true;
   document.querySelector('#card-actions').style.display = 'none';
   document.querySelector('#btn-cuadrar').style.display = 'none';
+  document.querySelector('#btn-apilar').style.display = 'none';
   document.querySelector('#debug-overlay').style.display = 'none';
 }
 
@@ -992,6 +994,7 @@ function selectCard(carta) {
                  carta.userData.cardBelow !== null ||
                  carta.userData.cardAbove !== null;
   document.querySelector('#btn-cuadrar').style.display = enPila ? 'inline-block' : 'none';
+  document.querySelector('#btn-apilar').style.display = enPila ? 'inline-block' : 'none';
   if (debugMode) actualizarDebugOverlay();
 }
 
@@ -1137,7 +1140,7 @@ function ajustarSombraPorPila(carta) {
 // ═══════════════════════════════════════════════
 // NOTA: v1 instantáneo. En v2+ se añadirá animación
 // lerp suave cuando tengamos sistema de tweens.
-function cuadrarPila(carta) {
+function cuadrarPila(carta, alinearRotacion = false) {
   let base = carta;
   let maxIter = 52;
   while (base.userData.cardBelow !== null && maxIter-- > 0) {
@@ -1148,16 +1151,24 @@ function cuadrarPila(carta) {
 
   const targetX = base.position.x;
   const targetZ = base.position.z;
+  const targetRotY = base.rotation.y;
 
   let actual = base;
   while (actual) {
-    // ⚡ En v2+: animatePosition(actual, targetX, targetZ, 0.2)
+    // ⚡ En v2+: animatePosition(actual, targetX, targetZ, targetRotY, 0.2)
     actual.position.x = targetX;
     actual.position.z = targetZ;
+
+    if (alinearRotacion) {
+      actual.rotation.y = targetRotY;
+    }
 
     if (actual === selectedCard && highlightLines) {
       highlightLines.position.x = targetX;
       highlightLines.position.z = targetZ;
+      if (alinearRotacion) {
+        highlightLines.rotation.y = targetRotY;
+      }
     }
 
     actual = cartas.find(c => c.userData.cardId === actual.userData.cardAbove);
@@ -1500,6 +1511,9 @@ document.querySelector('#rot-right-btn').addEventListener('click', () => {
 });
 document.querySelector('#btn-cuadrar').addEventListener('click', () => {
   if (selectedCard) cuadrarPila(selectedCard);
+});
+document.querySelector('#btn-apilar').addEventListener('click', () => {
+  if (selectedCard) cuadrarPila(selectedCard, true);
 });
 
 // ── Doble tap en el canvas para voltear carta seleccionada ──
