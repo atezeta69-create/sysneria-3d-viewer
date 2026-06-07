@@ -1000,6 +1000,9 @@ function clearSelection() {
   document.querySelector('#card-actions').style.display = 'none';
   document.querySelector('#btn-cuadrar').style.display = 'none';
   document.querySelector('#btn-apilar').style.display = 'none';
+  document.querySelector('#btn-levantar').style.display = 'none';
+  document.querySelector('#btn-levantar-n').style.display = 'none';
+  document.querySelector('#levantar-n-input').style.display = 'none';
   document.querySelector('#debug-overlay').style.display = 'none';
 }
 
@@ -1171,6 +1174,8 @@ function actualizarBotonesPila(carta) {
                  carta.userData.cardAbove !== null;
   document.querySelector('#btn-cuadrar').style.display = enPila ? 'inline-block' : 'none';
   document.querySelector('#btn-apilar').style.display = enPila ? 'inline-block' : 'none';
+  document.querySelector('#btn-levantar').style.display = enPila ? 'inline-block' : 'none';
+  document.querySelector('#btn-levantar-n').style.display = enPila ? 'inline-block' : 'none';
 }
 
 // ═══════════════════════════════════════════════
