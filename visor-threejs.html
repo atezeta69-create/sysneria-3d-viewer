@@ -1732,6 +1732,8 @@ document.querySelector('#btn-levantar').addEventListener('click', () => {
   const grupo = levantarGrupo([...pila]);
   if (grupo) {
     selectedObject = grupo;
+    isDragging = true;
+    startGrabCursor();
     controls.enabled = false;
     clearSelection();
   }
@@ -1760,6 +1762,8 @@ document.querySelector('#btn-levantar-n-confirm').addEventListener('click', () =
   const grupo = levantarGrupo([...cartasArriba]);
   if (grupo) {
     selectedObject = grupo;
+    isDragging = true;
+    startGrabCursor();
     controls.enabled = false;
     clearSelection();
   }
