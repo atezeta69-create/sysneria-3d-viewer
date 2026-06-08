@@ -974,20 +974,7 @@ function getDraggableUnderPointer(event) {
   if (hits.length > 0) {
     let hit = hits[0].object;
     while (hit.parent) {
-      if (hit.parent.userData && hit.parent.userData.draggable) {
-        // Si este objeto tiene un ancestro con esGrupoLevantado, devolver ese grupo
-        let ancestor = hit.parent;
-        let grupoEncontrado = null;
-        while (ancestor.parent) {
-          if (ancestor.parent.userData && ancestor.parent.userData.esGrupoLevantado) {
-            grupoEncontrado = ancestor.parent;
-            break;
-          }
-          ancestor = ancestor.parent;
-        }
-        if (grupoEncontrado) return grupoEncontrado;
-        return hit.parent;
-      }
+      if (hit.parent.userData && hit.parent.userData.draggable) return hit.parent;
       hit = hit.parent;
     }
   }
