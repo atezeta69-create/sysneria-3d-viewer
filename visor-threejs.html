@@ -166,6 +166,7 @@ canvas{cursor:none!important}
     <button id="btn-apilar" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Alinear posicion y rotacion de la pila">⬛ Apilar</button>
     <button id="btn-levantar" style="display:none;background:rgba(200,184,152,0.08);border:2px solid #88aacc;color:#aaccff;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Levantar toda la pila">🖐️</button>
     <button id="btn-levantar-n" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Levantar N cartas">🔢</button>
+    <button id="btn-fusionar" style="display:none;background:rgba(100,150,200,0.08);border:1px solid rgba(100,150,200,0.15);color:#88aacc;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Fusionar todas las pilas superpuestas en una sola">🔗 Fusionar</button>
   </div>
 
 <div id="levantar-n-input" style="display:none;margin:6px 0 0 8px;gap:6px;align-items:center;background:rgba(10,10,15,0.9);padding:6px 10px;border-radius:8px;border:1px solid rgba(200,184,152,0.2)">
@@ -642,6 +643,70 @@ function generarIdPila() {
   return 'pila_' + String(contadorPilas).padStart(4, '0');
 }
 
+// ── Fusionar pilas superpuestas ──
+function fusionarPilas(carta) {
+  if (!carta) return;
+  
+  const snap = carta.userData.snapRadius || 0.04;
+  const posX = carta.position.x;
+  const posZ = carta.position.z;
+  
+  // 1. Encontrar TODAS las pilas dentro del radio de snap
+  const pilasEncontradas = new Map();
+  
+  for (const otra of cartas) {
+    if (!otra.parent) continue;
+    const dx = Math.abs(otra.position.x - posX);
+    const dz = Math.abs(otra.position.z - posZ);
+    if (dx < snap && dz < snap) {
+      const gid = otra.userData.stackGroupId;
+      if (gid && pilas.has(gid)) {
+        pilasEncontradas.set(gid, pilas.get(gid));
+      }
+    }
+  }
+  
+  // 2. Si solo hay una pila, no hay nada que fusionar
+  if (pilasEncontradas.size <= 1) return;
+  
+  // 3. Fusionar: crear un nuevo stackGroupId con todas las cartas
+  const nuevoGid = generarIdPila();
+  const todasLasCartas = [];
+  
+  for (const [gid, pilaCartas] of pilasEncontradas) {
+    for (const c of pilaCartas) {
+      c.userData.stackGroupId = nuevoGid;
+      todasLasCartas.push(c);
+    }
+    pilas.delete(gid);
+  }
+  
+  // Ordenar por altura Y (de abajo a arriba)
+  todasLasCartas.sort((a, b) => a.position.y - b.position.y);
+  
+  pilas.set(nuevoGid, todasLasCartas);
+  sincronizarPropsDesdeMapa(nuevoGid);
+  
+  for (const c of todasLasCartas) {
+    ajustarSombraPorPila(c);
+  }
+}
+
+function detectarMultiplesPilas(carta) {
+  if (!carta) return false;
+  const snap = carta.userData.snapRadius || 0.04;
+  const gids = new Set();
+  for (const otra of cartas) {
+    if (!otra.parent || otra === carta) continue;
+    const dx = Math.abs(otra.position.x - carta.position.x);
+    const dz = Math.abs(otra.position.z - carta.position.z);
+    if (dx < snap && dz < snap && otra.userData.stackGroupId) {
+      gids.add(otra.userData.stackGroupId);
+    }
+  }
+  return gids.size > 1;
+}
+
 const loader = new GLTFLoader();
 
 // ═══════════════════════════════════════════════
@@ -1023,6 +1088,7 @@ function clearSelection() {
   document.querySelector('#btn-apilar').style.display = 'none';
   document.querySelector('#btn-levantar').style.display = 'none';
   document.querySelector('#btn-levantar-n').style.display = 'none';
+  document.querySelector('#btn-fusionar').style.display = 'none';
   document.querySelector('#levantar-n-input').style.display = 'none';
   document.querySelector('#debug-overlay').style.display = 'none';
 }
@@ -1210,6 +1276,9 @@ function actualizarBotonesPila(carta) {
   document.querySelector('#btn-apilar').style.display = enPila ? 'inline-block' : 'none';
   document.querySelector('#btn-levantar').style.display = enPila ? 'inline-block' : 'none';
   document.querySelector('#btn-levantar-n').style.display = enPila ? 'inline-block' : 'none';
+  // Mostrar Fusionar solo si hay multiples pilas bajo esta carta
+  const hayMultiplesPilas = detectarMultiplesPilas(carta);
+  document.querySelector('#btn-fusionar').style.display = hayMultiplesPilas ? 'inline-block' : 'none';
 }
 
 // ═══════════════════════════════════════════════
@@ -1779,6 +1848,14 @@ document.querySelector('#btn-levantar-n-confirm').addEventListener('click', () =
 
 document.querySelector('#btn-levantar-n-cancel').addEventListener('click', () => {
   document.querySelector('#levantar-n-input').style.display = 'none';
+});
+
+// ── Botón Fusionar pilas ──
+document.querySelector('#btn-fusionar').addEventListener('click', () => {
+  if (!selectedCard) return;
+  fusionarPilas(selectedCard);
+  actualizarBotonesPila(selectedCard);
+  selectCard(selectedCard);
 });
 
 // ── Descargar logs de sesión ──
