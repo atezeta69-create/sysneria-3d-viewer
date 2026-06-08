@@ -1371,7 +1371,14 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
   isPointerDown = true;
   const obj = getDraggableUnderPointer(e);
   if (!obj) { clearSelection(); return; }
-  
+
+  // Si ya hay un grupo levantado activo, no sobrescribir selectedObject
+  // Dejar que pointerup ejecute soltarGrupo()
+  if (selectedObject && selectedObject.userData.esGrupoLevantado) {
+    e.preventDefault();
+    return;
+  }
+
   // Si es carta, la pre-seleccionamos (aún no sabemos si es click o drag)
   if (obj.userData.isCard) {
     selectCard(obj);
