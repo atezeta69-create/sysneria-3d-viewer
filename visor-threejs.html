@@ -707,6 +707,23 @@ function detectarMultiplesPilas(carta) {
   return gids.size > 1;
 }
 
+// ── Buscar pila debajo de una carta (para orden al soltar grupo) ──
+function buscarPilaDebajo(carta) {
+  if (!carta) return null;
+  const snap = carta.userData.snapRadius || 0.04;
+  const gids = new Set();
+  for (const otra of cartas) {
+    if (!otra.parent || otra === carta) continue;
+    const dx = Math.abs(otra.position.x - carta.position.x);
+    const dz = Math.abs(otra.position.z - carta.position.z);
+    if (dx < snap && dz < snap && otra.userData.stackGroupId &&
+        otra.userData.stackGroupId !== carta.userData.stackGroupId) {
+      gids.add(otra.userData.stackGroupId);
+    }
+  }
+  return gids.size > 0 ? gids.values().next().value : null;
+}
+
 const loader = new GLTFLoader();
 
 // ═══════════════════════════════════════════════
@@ -1414,6 +1431,29 @@ function soltarGrupo(grupo) {
   console.log('pilas.has(nuevoGid)?', pilas.has(nuevoGid), '| len:', pilas.get(nuevoGid)?.length);
 
   sincronizarPropsDesdeMapa(nuevoGid);
+
+  // ✅ Detectar si hay otra pila debajo y desplazar Y para mantener el orden
+  const cartasArriba = cartas;
+  if (cartasArriba.length > 0) {
+    const cartaBase = cartasArriba[0];
+    const gidDebajo = buscarPilaDebajo(cartaBase);
+    if (gidDebajo) {
+      const pilaDebajo = pilas.get(gidDebajo);
+      if (pilaDebajo && pilaDebajo.length > 0) {
+        const ultimaCarta = pilaDebajo[pilaDebajo.length - 1];
+        const alturaDebajo = ultimaCarta.position.y + ultimaCarta.userData.thickness;
+        const alturaActual = cartaBase.position.y;
+        const desplazamiento = alturaDebajo - alturaActual + CARD_OFFSET;
+        if (desplazamiento > 0) {
+          for (const c of cartasArriba) {
+            c.position.y += desplazamiento;
+            c.userData.stackHeight += desplazamiento;
+            c.updateMatrix();
+          }
+        }
+      }
+    }
+  }
 
   cartas.forEach((c, i) => {
     console.log('  Carta', i, 'Y despues de sincronizar:', c.position.y,
