@@ -1497,6 +1497,24 @@ renderer.domElement.addEventListener('pointerdown', (e) => {
     return;
   }
 
+  // Shift+click → levantar mazo completo (solo carta superior de pila de ≥2)
+  if (e.shiftKey && obj.userData.isCard && obj.userData.isTopCard && obj.userData.stackGroupId) {
+    const gid = obj.userData.stackGroupId;
+    if (pilas.has(gid) && pilas.get(gid).length >= 2) {
+      const pila = pilas.get(gid);
+      const grupo = levantarGrupo([...pila]);
+      if (grupo) {
+        selectedObject = grupo;
+        isDragging = true;
+        startGrabCursor();
+        controls.enabled = false;
+        clearSelection();
+        e.preventDefault();
+        return;
+      }
+    }
+  }
+
   // Si es carta, la pre-seleccionamos (aún no sabemos si es click o drag)
   if (obj.userData.isCard) {
     selectCard(obj);

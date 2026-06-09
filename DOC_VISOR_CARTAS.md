@@ -1,12 +1,28 @@
 # 🃏 Visor Three.js — Documentación técnica
 
-> **Fecha:** 7 de junio de 2026 (v10 — Stacking + Dedo índice)  
+> **Fecha:** 9 de junio de 2026 (v11 — Shift+click levantar mazo)  
 > **Archivo principal:** `02_VISOR_WEB/visor-threejs.html`  
 > **Arquitectura:** Capas independientes + Launcher minimalista
 
 ---
 
-## 🔧 Últimos cambios (v10 — 7 junio)
+## 🔧 Últimos cambios (v11 — 9 junio)
+
+### 🖐️ Shift+click levantar mazo completo
+**Nuevo atajo:** Shift + puntero sobre la carta superior de un mazo (pila ≥2 cartas) lo levanta automáticamente.
+
+**Implementación:**
+- 16 líneas en `pointerdown` (líneas 1500-1516 de `visor-threejs.html`)
+- Solo reacciona en carta superior (`isTopCard=true`) con `stackGroupId` válido y pila de ≥2 cartas
+- Reutiliza `levantarGrupo()` — crea un `THREE.Group` con todas las cartas del mazo
+- Arrastre inmediato: `isDragging=true` nada más hacer click
+- Sin selección visual (`clearSelection()`) para evitar borde azul inconsistente
+- Click normal sobre carta sin Shift sigue funcionando igual
+- Botón 🖐️ del panel convive sin cambios
+
+**Plan conjunto:** Diseñado por Portátil, contrastado por K, validado por Zeta. K confirmó la fusión con filtro `isTopCard`.
+
+**Checkpoint:** `checkpoint/2026-06-09_antes-shift-click-levantar-mazo` + backup `__BACKUP_antes_shift_click_levantar_mazo_2026-06-09.html`
 
 ### 🖐️ Fase 2 — Dedo índice (raycast desde empty)
 
@@ -118,6 +134,7 @@ Implementado siguiendo el plan de K (`plan-implementacion-stacking-y-dedo-2026-0
 - **26 dorsos:** selector por artista + desplegable por diseño
 - **4 modos de carta:** Abanico, Fila, Libres, Repartir
 - **Arrastre universal:** click → hold → drag para cartas y tapetes
+- **Shift+click levantar mazo:** Shift + puntero sobre carta superior de pila de ≥2 → agarre del mazo completo
 - **Flip:** click derecho o tecla F
 - **Rotación tapete:** tecla R / Shift+R
 - **Selección:** borde azul en carta o tapete seleccionado
