@@ -56,9 +56,9 @@ canvas{cursor:none!important}
 .dorso-dropdown option{background:#1a1814;color:#c8b898}
 
 /* ── Selector de baraja ── */
-.deck-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s}
-.deck-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
-.deck-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
+.decks-select{width:100%;background:rgba(20,18,14,0.9);color:#c8b898;border:1px solid rgba(200,184,152,0.2);border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;cursor:pointer;margin:4px 0}
+.decks-select option{background:#1a1814;color:#c8b898}
+.decks-select:hover{border-color:rgba(200,184,152,0.4)}
 
 /* ── Selector de tapete ── */
 .tapete-select{display:flex;gap:4px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
@@ -69,8 +69,11 @@ canvas{cursor:none!important}
 .tapete-btn .color-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
 
 /* ── Modo de cartas ── */
-.mode-select{display:flex;gap:4px}
-.mode-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s}
+.mode-select{display:flex;gap:4px;align-items:center}
+.mode-select-inline{flex:1;background:rgba(20,18,14,0.9);color:#c8b898;border:1px solid rgba(200,184,152,0.2);border-radius:6px;padding:4px 6px;font-size:11px;font-family:inherit;cursor:pointer}
+.mode-select-inline option{background:#1a1814;color:#c8b898}
+.mode-select-inline:hover{border-color:rgba(200,184,152,0.4)}
+.mode-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s;white-space:nowrap}
 .mode-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
 .mode-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
 #reset-cards{padding:3px 8px;font-size:10px}
@@ -153,10 +156,12 @@ canvas{cursor:none!important}
       <span class=collapse-icon>▼</span>
     </div>
     <div class=collapsible-body>
-      <button class="deck-btn active" data-deck="poker_normal">♠ Poker</button>
-      <button class="deck-btn" data-deck="poker_cartoon">😄 Cartoon</button>
-      <button class="deck-btn" data-deck="espanola_40">🇪🇸 Española 40</button>
-      <button class="deck-btn" data-deck="espanola_48">🇪🇸 Española 48</button>
+      <select class=decks-select id=deck-select>
+        <option value="poker_normal">♠ Poker</option>
+        <option value="poker_cartoon">😄 Cartoon</option>
+        <option value="espanola_40">🇪🇸 Española 40</option>
+        <option value="espanola_48">🇪🇸 Española 48</option>
+      </select>
     </div>
   </div>
   <div class=collapsible id=coll-dorso style=display:none>
@@ -178,11 +183,13 @@ canvas{cursor:none!important}
       <span class=collapse-icon>▼</span>
     </div>
     <div class=collapsible-body>
-      <div class=mode-select id=card-options style=opacity:1;pointer-events:auto;margin:0>
-        <button class="mode-btn active" data-mode="fan">🃏 Abanico</button>
-        <button class="mode-btn" data-mode="row">📏 Fila</button>
-        <button class="mode-btn" data-mode="scatter">🖐️ Libres</button>
-        <button class="mode-btn" id="reset-cards">⟲ Repartir</button>
+      <div class=mode-select id=card-options>
+        <select class=mode-select-inline id=mode-select>
+          <option value="fan">🃏 Abanico</option>
+          <option value="row">📏 Fila</option>
+          <option value="scatter">🖐️ Libres</option>
+        </select>
+        <button class=mode-btn id=reset-cards>⟲ Repartir</button>
       </div>
     </div>
   </div>
@@ -455,6 +462,12 @@ const PanelStore = {
     const btn = document.querySelector(`.mesa-btn[data-model="${d.model}"]`);
     if (btn) { btn.click(); }
     else { const fb = document.querySelector('.mesa-btn'); if (fb) fb.click(); }
+
+    // Sincronizar baraja y modo con lo guardado
+    const ds = document.querySelector('#deck-select');
+    if (ds) { ds.value = d.deck; }
+    const ms = document.querySelector('#mode-select');
+    if (ms) { ms.value = d.mode; }
   }
 };
 
@@ -1970,20 +1983,16 @@ document.querySelector('#debug-toggle').addEventListener('click', () => {
   PanelStore.set('debugIdentidad', debugMode);
 });
 
-// ── Selector de baraja ──
-document.querySelectorAll('.deck-btn[data-deck]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.deck-btn[data-deck]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const newDeck = btn.dataset.deck;
-    if (newDeck !== currentDeck && layers.cartas.visible) {
-      currentDeck = newDeck;
-      cargarBaraja(currentDeck);
-    } else {
-      currentDeck = newDeck;
-    }
-    PanelStore.set('deck', currentDeck);
-  });
+// ── Selector de baraja (dropdown) ──
+document.querySelector('#deck-select').addEventListener('change', (e) => {
+  const newDeck = e.target.value;
+  if (newDeck !== currentDeck && layers.cartas.visible) {
+    currentDeck = newDeck;
+    cargarBaraja(currentDeck);
+  } else {
+    currentDeck = newDeck;
+  }
+  PanelStore.set('deck', currentDeck);
 });
 
 // ── Selector de dorso: fuente (Zeta / Miguel Gil) ──
@@ -2021,17 +2030,13 @@ document.querySelectorAll('.tapete-btn[data-tapete]').forEach(btn => {
   });
 });
 
-// ── Modo de cartas ──
-document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    cardMode = btn.dataset.mode;
-    if (layers.cartas.visible) {
-      posicionarCartas(cardMode);
-    }
-    PanelStore.set('mode', cardMode);
-  });
+// ── Modo de cartas (dropdown + Repartir) ──
+document.querySelector('#mode-select').addEventListener('change', (e) => {
+  cardMode = e.target.value;
+  if (layers.cartas.visible) {
+    posicionarCartas(cardMode);
+  }
+  PanelStore.set('mode', cardMode);
 });
 
 document.querySelector('#reset-cards').addEventListener('click', () => {
