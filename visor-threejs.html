@@ -90,6 +90,15 @@ canvas{cursor:none!important}
 #status{position:absolute;bottom:16px;right:16px;z-index:10;color:#5a5448;font-size:11px;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px}
 #status .ok{color:#4caf50}
 #status .loading{color:#ffa726}
+
+/* ── Collapsible (Modelo) ── */
+.collapsible-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:2px 4px;border-radius:6px;transition:background 0.15s;user-select:none}
+.collapsible-header:hover{background:rgba(255,255,255,0.04)}
+.collapsible-header:focus-visible{outline:1px solid rgba(200,184,152,0.3);outline-offset:2px;border-radius:4px}
+.collapse-icon{font-size:8px;color:#6a6458;transition:transform 0.25s ease}
+.collapsible.collapsed .collapse-icon{transform:rotate(-90deg)}
+.collapsible-body{overflow:hidden;max-height:500vh;transition:max-height 0.3s ease}
+.collapsible-body.collapsed{max-height:0}
 </style>
 </head>
 <body>
@@ -103,12 +112,19 @@ canvas{cursor:none!important}
   </div>
   <div id=ui-body>
 
-  <div class=section>🪵 Modelo</div>
-  <button class="mesa-btn active" data-model="assets/mesas/mesa_v01_sin_tapete.glb">🌳 Orgánica V1 <span class=size>68 KB</span></button>
-  <button class="mesa-btn" data-model="assets/mesas/mesa_v02_sin_tapete.glb">🌳 Orgánica V2 <span class=size>44 KB</span></button>
-  <button class="mesa-btn" data-model="assets/mesas/mesa_v03_sin_tapete.glb">🌳 Orgánica V3 <span class=size>34 KB</span></button>
-  <button class="mesa-btn" data-model="assets/mesas/mesa_rectangular_v01.glb">Rectangular V1 <span class=size>25 KB</span></button>
-  <button class="mesa-btn" data-model="assets/mesas/mesa_rectangular_v02.glb">Rectangular V2 <span class=size>25 KB</span></button>
+  <div class=collapsible id=coll-modelo>
+    <div class=collapsible-header data-collapse=modelo role=button aria-expanded=true tabindex=0>
+      <span class=section style="margin:0">🪵 Modelo</span>
+      <span class=collapse-icon>▼</span>
+    </div>
+    <div class=collapsible-body>
+      <button class="mesa-btn active" data-model="assets/mesas/mesa_v01_sin_tapete.glb">🌳 Orgánica V1 <span class=size>68 KB</span></button>
+      <button class="mesa-btn" data-model="assets/mesas/mesa_v02_sin_tapete.glb">🌳 Orgánica V2 <span class=size>44 KB</span></button>
+      <button class="mesa-btn" data-model="assets/mesas/mesa_v03_sin_tapete.glb">🌳 Orgánica V3 <span class=size>34 KB</span></button>
+      <button class="mesa-btn" data-model="assets/mesas/mesa_rectangular_v01.glb">Rectangular V1 <span class=size>25 KB</span></button>
+      <button class="mesa-btn" data-model="assets/mesas/mesa_rectangular_v02.glb">Rectangular V2 <span class=size>25 KB</span></button>
+    </div>
+  </div>
 
   <div class=section>🎛️ Capas</div>
   
@@ -305,6 +321,113 @@ const CARD_SCALE = 0.8;
 const CARD_LIFT = 0.015;
 const TAPETE_THICKNESS = 0.003; // grosor del tapete (~3mm)
 const CARD_OFFSET = TAPETE_THICKNESS / 2 + 0.001; // cartas justo encima del tapete
+
+// ═══════════════════════════════════════════════
+//  PERSISTENCIA DEL PANEL (localStorage)
+// ═══════════════════════════════════════════════
+
+const PanelStore = {
+  VERSION: 1,
+  STORAGE_KEY: 'sysneria_visor_panel',
+
+  defaults: {
+    version: 1,
+    model: 'assets/mesas/mesa_v01_sin_tapete.glb',
+    mesaVisible: true,
+    tapeteVisible: true,
+    tapeteColor: 'Verde',
+    tapeteLocked: true,
+    cartasVisible: false,
+    cartasLocked: false,
+    deck: 'poker_normal',
+    dorsoSource: 'zeta',
+    dorsoFile: 'dorso_zeta_base.png',
+    mode: 'fan',
+    zoom: 2.5,
+    debugIdentidad: false,
+    modeloCollapsed: false,
+  },
+
+  _data: null,
+
+  save() {
+    if (!this._data) return;
+    this._data.version = this.VERSION;
+    try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._data)); }
+    catch (e) { console.warn('PanelStore: no se pudo guardar', e); }
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.version === this.VERSION) {
+          this._data = { ...this.defaults, ...parsed };
+          return;
+        }
+      }
+    } catch (e) { console.warn('PanelStore: localStorage corrupto, usando defaults'); }
+    this._data = { ...this.defaults };
+  },
+
+  get(key) { return this._data ? this._data[key] : this.defaults[key]; },
+
+  set(key, value) {
+    if (!this._data) this._data = { ...this.defaults };
+    this._data[key] = value;
+    this.save();
+  },
+
+  restore() {
+    this.load();
+    const d = this._data;
+
+    // Colapsado
+    if (d.modeloCollapsed) {
+      const el = document.getElementById('coll-modelo');
+      if (el) {
+        el.classList.add('collapsed');
+        const body = el.querySelector('.collapsible-body');
+        if (body) body.classList.add('collapsed');
+        const h = el.querySelector('.collapsible-header');
+        if (h) h.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    // Zoom
+    const zs = document.querySelector('#zoomSlider');
+    if (zs) zs.value = d.zoom;
+
+    // Debug overlay
+    if (d.debugIdentidad) {
+      const dt = document.querySelector('#debug-toggle');
+      if (dt) { dt.classList.add('active'); dt.querySelector('.toggle-switch').classList.add('on'); }
+      const ov = document.querySelector('#debug-overlay');
+      if (ov) ov.style.display = 'block';
+    }
+
+    // Mesa guardada
+    const btn = document.querySelector(`.mesa-btn[data-model="${d.model}"]`);
+    if (btn) { btn.click(); }
+    else { const fb = document.querySelector('.mesa-btn'); if (fb) fb.click(); }
+  }
+};
+
+// ── Toggle colapsable ──
+document.addEventListener('click', (e) => {
+  const header = e.target.closest('.collapsible-header');
+  if (!header) return;
+  const coll = header.closest('.collapsible');
+  if (!coll) return;
+  const body = coll.querySelector('.collapsible-body');
+  if (!body) return;
+  const was = body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', !was);
+  coll.classList.toggle('collapsed', !was);
+  header.setAttribute('aria-expanded', was ? 'true' : 'false');
+  if (coll.id === 'coll-modelo') PanelStore.set('modeloCollapsed', !was);
+});
 
 // ── Sistema de logging interno ──
 window.__logBuffer = [];
@@ -1713,6 +1836,7 @@ document.querySelectorAll('.lock-btn[data-lock]').forEach(btn => {
     locks[layer] = !locks[layer];
     btn.classList.toggle('locked', locks[layer]);
     btn.textContent = locks[layer] ? '🔒' : '🔓';
+    PanelStore.set(layer === 'tapete' ? 'tapeteLocked' : 'cartasLocked', locks[layer]);
   });
 });
 
@@ -1733,6 +1857,7 @@ document.querySelectorAll('.mesa-btn').forEach(btn => {
     document.querySelector('#deck-options').classList.remove('active');
     document.querySelector('#card-options').classList.remove('active');
     cargarModelo(btn.dataset.model);
+    PanelStore.set('model', btn.dataset.model);
   });
 });
 
@@ -1765,6 +1890,7 @@ document.querySelectorAll('.toggle-row').forEach(row => {
     document.querySelector('#dorso-source-options').classList.toggle('active', layer === 'cartas' && show);
     document.querySelector('#dorso-dropdown').classList.toggle('active', layer === 'cartas' && show);
     document.querySelector('#card-options').classList.toggle('active', layer === 'cartas' && show);
+    PanelStore.set(layer === 'tapete' ? 'tapeteVisible' : 'cartasVisible', show);
   });
 });
 
@@ -1779,6 +1905,7 @@ document.querySelector('#debug-toggle').addEventListener('click', () => {
   } else {
     actualizarDebugOverlay();
   }
+  PanelStore.set('debugIdentidad', debugMode);
 });
 
 // ── Selector de baraja ──
@@ -1793,6 +1920,7 @@ document.querySelectorAll('.deck-btn[data-deck]').forEach(btn => {
     } else {
       currentDeck = newDeck;
     }
+    PanelStore.set('deck', currentDeck);
   });
 });
 
@@ -1806,12 +1934,15 @@ document.querySelectorAll('.source-btn[data-source]').forEach(btn => {
     // Cargar el primer dorso de esa fuente automáticamente
     const first = DORSO_SOURCES[source].dorsos[0];
     cargarTexturaDorso(source, first.file);
+    PanelStore.set('dorsoSource', source);
+    PanelStore.set('dorsoFile', first.file);
   });
 });
 
 // ── Selector de dorso: desplegable ──
 document.querySelector('#dorso-dropdown').addEventListener('change', (e) => {
   cargarTexturaDorso(currentDorsoSource, e.target.value);
+  PanelStore.set('dorsoFile', e.target.value);
 });
 
 // ── Selector de tapete ──
@@ -1824,6 +1955,7 @@ document.querySelectorAll('.tapete-btn[data-tapete]').forEach(btn => {
       cargarTapete(currentTapete);
       if (tapeteObject && !tapeteObject.parent) scene.add(tapeteObject);
     }
+    PanelStore.set('tapeteColor', currentTapete);
   });
 });
 
@@ -1836,6 +1968,7 @@ document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
     if (layers.cartas.visible) {
       posicionarCartas(cardMode);
     }
+    PanelStore.set('mode', cardMode);
   });
 });
 
@@ -1954,7 +2087,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   lastTapTime = now;
 });
 
-// ── Zoom ──
+// ── Zoom (tiempo real) ──
 document.querySelector('#zoomSlider').addEventListener('input', (e) => {
   const dist = parseFloat(e.target.value);
   const dir = new THREE.Vector3();
@@ -1962,14 +2095,16 @@ document.querySelector('#zoomSlider').addEventListener('input', (e) => {
   camera.position.copy(controls.target).add(dir.multiplyScalar(-dist));
   controls.update();
 });
+document.querySelector('#zoomSlider').addEventListener('change', (e) => {
+  PanelStore.set('zoom', parseFloat(e.target.value));
+});
 
 // ═══════════════════════════════════════════════
 //  INICIO
 // ═══════════════════════════════════════════════
 
-// Cargar la primera mesa del selector (Orgánica V1)
-const firstMesaBtn = document.querySelector('.mesa-btn');
-if (firstMesaBtn) cargarModelo(firstMesaBtn.dataset.model);
+// Restaurar configuración guardada (mesa, zoom, colapsado, debug, etc.)
+PanelStore.restore();
 
 window.addEventListener('resize', () => {
   const a = window.innerWidth / window.innerHeight;
