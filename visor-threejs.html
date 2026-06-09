@@ -162,8 +162,8 @@ canvas{cursor:none!important}
     <button id="flip-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Voltear carta (doble tap o clic derecho)">↻ Voltear</button>
     <button id="rot-left-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Girar izquierda (R en teclado)">↺</button>
     <button id="rot-right-btn" style="background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Girar derecha (Shift+R en teclado)">↻</button>
-    <button id="btn-cuadrar" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Alinear cartas de la pila (Q)">⬜ Cuadrar</button>
-    <button id="btn-apilar" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Alinear posicion y rotacion de la pila">⬛ Apilar</button>
+    <button id="btn-cuadrar" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Alinear posición y rotación de la pila (Q)">⬜ Cuadrar</button>
+    <button id="btn-apilar" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Alinear solo posición de la pila">⬛ Apilar</button>
     <button id="btn-levantar" style="display:none;background:rgba(200,184,152,0.08);border:2px solid #88aacc;color:#aaccff;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Levantar toda la pila">🖐️</button>
     <button id="btn-levantar-n" style="display:none;background:rgba(200,184,152,0.08);border:1px solid rgba(200,184,152,0.15);color:#c8b898;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Levantar N cartas">🔢</button>
     <button id="btn-fusionar" style="display:none;background:rgba(100,150,200,0.08);border:1px solid rgba(100,150,200,0.15);color:#88aacc;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;transition:all 0.2s" title="Fusionar todas las pilas superpuestas en una sola">🔗 Fusionar</button>
@@ -1671,7 +1671,7 @@ document.addEventListener('keydown', (e) => {
 
   // Q: cuadrar pila
   if ((e.key === 'q' || e.key === 'Q') && selectedCard) {
-    cuadrarPila(selectedCard);
+    cuadrarPila(selectedCard, true);
     e.preventDefault();
   }
 });
@@ -1842,10 +1842,10 @@ document.querySelector('#rot-right-btn').addEventListener('click', () => {
   if (highlightLines) highlightLines.rotation.y = selectedCard.rotation.y;
 });
 document.querySelector('#btn-cuadrar').addEventListener('click', () => {
-  if (selectedCard) cuadrarPila(selectedCard);
+  if (selectedCard) cuadrarPila(selectedCard, true);
 });
 document.querySelector('#btn-apilar').addEventListener('click', () => {
-  if (selectedCard) cuadrarPila(selectedCard, true);
+  if (selectedCard) cuadrarPila(selectedCard);
 });
 
 // ── Botón Levantar (todo) ──
