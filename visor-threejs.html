@@ -47,8 +47,7 @@ canvas{cursor:none!important}
 .lock-btn.locked:hover{background:rgba(255,100,100,0.1)}
 
 /* ── Selector de dorsos: fuente + desplegable ── */
-.source-select{display:flex;gap:4px;margin:6px 0 2px 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s}
-.source-select.active{opacity:1;pointer-events:all}
+.source-select{display:flex;gap:4px}
 .source-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 0;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s;flex:1;text-align:center}
 .source-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
 .source-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
@@ -57,8 +56,6 @@ canvas{cursor:none!important}
 .dorso-dropdown option{background:#1a1814;color:#c8b898}
 
 /* ── Selector de baraja ── */
-.deck-select{display:flex;gap:4px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
-.deck-select.active{opacity:1;pointer-events:all}
 .deck-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s}
 .deck-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
 .deck-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
@@ -72,8 +69,7 @@ canvas{cursor:none!important}
 .tapete-btn .color-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
 
 /* ── Modo de cartas ── */
-.mode-select{display:flex;gap:4px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s}
-.mode-select.active{opacity:1;pointer-events:all}
+.mode-select{display:flex;gap:4px}
 .mode-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s}
 .mode-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
 .mode-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
@@ -151,24 +147,44 @@ canvas{cursor:none!important}
     </div>
   </div>
 
-  <div class="deck-select" id="deck-options">
-    <button class="deck-btn active" data-deck="poker_normal">♠ Poker</button>
-    <button class="deck-btn" data-deck="poker_cartoon">😄 Cartoon</button>
-    <button class="deck-btn" data-deck="espanola_40">🇪🇸 Española 40</button>
-    <button class="deck-btn" data-deck="espanola_48">🇪🇸 Española 48</button>
+  <div class=collapsible id=coll-baraja>
+    <div class=collapsible-header data-collapse=baraja role=button aria-expanded=true tabindex=0>
+      <span class=section style="margin:0">♠ Baraja</span>
+      <span class=collapse-icon>▼</span>
+    </div>
+    <div class=collapsible-body>
+      <button class="deck-btn active" data-deck="poker_normal">♠ Poker</button>
+      <button class="deck-btn" data-deck="poker_cartoon">😄 Cartoon</button>
+      <button class="deck-btn" data-deck="espanola_40">🇪🇸 Española 40</button>
+      <button class="deck-btn" data-deck="espanola_48">🇪🇸 Española 48</button>
+    </div>
   </div>
-  <div class=section style=margin-top:2px>🎴 Dorsos</div>
-  <div class=source-select id=dorso-source-options>
-    <button class=source-btn active data-source=zeta>🎴 Zeta</button>
-    <button class=source-btn data-source=miguel_gil>🎴 Miguel Gil</button>
+  <div class=collapsible id=coll-dorso style=display:none>
+    <div class=collapsible-header data-collapse=dorso role=button aria-expanded=true tabindex=0>
+      <span class=section style="margin:0">🎴 Dorsos</span>
+      <span class=collapse-icon>▼</span>
+    </div>
+    <div class=collapsible-body>
+      <div class=source-select id=dorso-source-options style=opacity:1;pointer-events:auto;margin:0>
+        <button class=source-btn active data-source=zeta>🎴 Zeta</button>
+        <button class=source-btn data-source=miguel_gil>🎴 Miguel Gil</button>
+      </div>
+      <select class=dorso-dropdown id=dorso-dropdown style=margin:4px 0 0 0></select>
+    </div>
   </div>
-  <select class=dorso-dropdown id=dorso-dropdown></select>
-
-  <div class="mode-select" id="card-options">
-    <button class="mode-btn active" data-mode="fan">🃏 Abanico</button>
-    <button class="mode-btn" data-mode="row">📏 Fila</button>
-    <button class="mode-btn" data-mode="scatter">🖐️ Libres</button>
-    <button class="mode-btn" id="reset-cards">⟲ Repartir</button>
+  <div class=collapsible id=coll-modo style=display:none>
+    <div class=collapsible-header data-collapse=modo role=button aria-expanded=true tabindex=0>
+      <span class=section style="margin:0">♻️ Reparto</span>
+      <span class=collapse-icon>▼</span>
+    </div>
+    <div class=collapsible-body>
+      <div class=mode-select id=card-options style=opacity:1;pointer-events:auto;margin:0>
+        <button class="mode-btn active" data-mode="fan">🃏 Abanico</button>
+        <button class="mode-btn" data-mode="row">📏 Fila</button>
+        <button class="mode-btn" data-mode="scatter">🖐️ Libres</button>
+        <button class="mode-btn" id="reset-cards">⟲ Repartir</button>
+      </div>
+    </div>
   </div>
 
   <!-- Boton voltear carta (oculto por defecto, aparece al seleccionar) -->
@@ -345,6 +361,9 @@ const PanelStore = {
     debugIdentidad: false,
     modeloCollapsed: false,
     capasCollapsed: false,
+    barajaCollapsed: false,
+    dorsoCollapsed: false,
+    modoCollapsed: false,
   },
 
   _data: null,
@@ -406,6 +425,20 @@ const PanelStore = {
       }
     }
 
+    // Baraja colapsado
+    if (d.barajaCollapsed) {
+      const el = document.getElementById('coll-baraja');
+      if (el) { el.classList.add('collapsed'); const b=el.querySelector('.collapsible-body'); if(b)b.classList.add('collapsed'); const h=el.querySelector('.collapsible-header'); if(h)h.setAttribute('aria-expanded','false'); }
+    }
+    if (d.dorsoCollapsed) {
+      const el = document.getElementById('coll-dorso');
+      if (el) { el.classList.add('collapsed'); const b=el.querySelector('.collapsible-body'); if(b)b.classList.add('collapsed'); const h=el.querySelector('.collapsible-header'); if(h)h.setAttribute('aria-expanded','false'); }
+    }
+    if (d.modoCollapsed) {
+      const el = document.getElementById('coll-modo');
+      if (el) { el.classList.add('collapsed'); const b=el.querySelector('.collapsible-body'); if(b)b.classList.add('collapsed'); const h=el.querySelector('.collapsible-header'); if(h)h.setAttribute('aria-expanded','false'); }
+    }
+
     // Zoom
     const zs = document.querySelector('#zoomSlider');
     if (zs) zs.value = d.zoom;
@@ -439,6 +472,9 @@ document.addEventListener('click', (e) => {
   header.setAttribute('aria-expanded', was ? 'true' : 'false');
   if (coll.id === 'coll-modelo') PanelStore.set('modeloCollapsed', !was);
   if (coll.id === 'coll-capas') PanelStore.set('capasCollapsed', !was);
+  if (coll.id === 'coll-baraja') PanelStore.set('barajaCollapsed', !was);
+  if (coll.id === 'coll-dorso') PanelStore.set('dorsoCollapsed', !was);
+  if (coll.id === 'coll-modo') PanelStore.set('modoCollapsed', !was);
 });
 
 // ── Sistema de logging interno ──
@@ -996,6 +1032,8 @@ function limpiarCartas() {
 }
 
 function cargarBaraja(deckKey) {
+  if (isLoadingBaraja) return;
+  isLoadingBaraja = true;
   limpiarCartas();
   const deck = DECKS[deckKey];
   const files = getDeckFilenames(deckKey);
@@ -1064,6 +1102,12 @@ function cargarBaraja(deckKey) {
           cartas.forEach(c => { if (!c.parent) scene.add(c); });
         }
         document.querySelector('#status').innerHTML = `<span class=ok>●</span> ${total} cartas`;
+        // Mostrar secciones de dorsos y modos
+        const dorsoEl = document.getElementById('coll-dorso');
+        const modoEl = document.getElementById('coll-modo');
+        if (dorsoEl) dorsoEl.style.display = '';
+        if (modoEl) modoEl.style.display = '';
+        isLoadingBaraja = false;
       } else if (loaded % 10 === 0) {
         document.querySelector('#status').innerHTML = `<span class=loading>●</span> Baraja ${loaded}/${total}`;
       }
@@ -1072,6 +1116,7 @@ function cargarBaraja(deckKey) {
       loaded++;
       if (loaded === total) {
         document.querySelector('#status').innerHTML = `<span style=color:#f44>●</span> Error en alguna carta`;
+        isLoadingBaraja = false;
       }
     });
   });
@@ -1149,6 +1194,11 @@ function mostrarCartas(show) {
     }
   } else {
     cartas.forEach(c => { if (c.parent) scene.remove(c); });
+    // Ocultar secciones de dorsos y modos
+    const dorsoEl = document.getElementById('coll-dorso');
+    const modoEl = document.getElementById('coll-modo');
+    if (dorsoEl) dorsoEl.style.display = 'none';
+    if (modoEl) modoEl.style.display = 'none';
   }
   layers.cartas.visible = show;
 }
@@ -1159,6 +1209,7 @@ function mostrarCartas(show) {
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+let isLoadingBaraja = false;
 const CLICK_THRESHOLD = 5; // px para distinguir click de drag
 let pointerStartPos = { x: 0, y: 0 };
 let isPointerDown = false;
@@ -1866,8 +1917,11 @@ document.querySelectorAll('.mesa-btn').forEach(btn => {
       if (r.dataset.layer === 'cartas') { r.classList.remove('active'); const sw=r.querySelector('.toggle-switch'); if(sw)sw.classList.remove('on'); }
     });
     document.querySelector('#tapete-options').classList.remove('active');
-    document.querySelector('#deck-options').classList.remove('active');
-    document.querySelector('#card-options').classList.remove('active');
+    // Ocultar secciones de dorsos y modos al cambiar de mesa
+    const dorsoEl = document.getElementById('coll-dorso');
+    const modoEl = document.getElementById('coll-modo');
+    if (dorsoEl) dorsoEl.style.display = 'none';
+    if (modoEl) modoEl.style.display = 'none';
     cargarModelo(btn.dataset.model);
     PanelStore.set('model', btn.dataset.model);
   });
@@ -1898,10 +1952,6 @@ document.querySelectorAll('.toggle-row').forEach(row => {
 
     // Mostrar opciones contextuales
     document.querySelector('#tapete-options').classList.toggle('active', layer === 'tapete' && show);
-    document.querySelector('#deck-options').classList.toggle('active', layer === 'cartas' && show);
-    document.querySelector('#dorso-source-options').classList.toggle('active', layer === 'cartas' && show);
-    document.querySelector('#dorso-dropdown').classList.toggle('active', layer === 'cartas' && show);
-    document.querySelector('#card-options').classList.toggle('active', layer === 'cartas' && show);
     PanelStore.set(layer === 'tapete' ? 'tapeteVisible' : 'cartasVisible', show);
   });
 });
