@@ -1155,6 +1155,7 @@ function cargarBaraja(deckKey) {
       m.userData.cardAbove = null;
       m.userData.stackGroupId = null;
       m.userData.isTopCard = true;
+      m.userData.faceUp = faceUp; // estado individual cara/dorso
 
       // Escalar carta
       m.scale.set(CARD_SCALE, CARD_SCALE, CARD_SCALE);
@@ -1217,6 +1218,7 @@ function posicionarCartas(mode) {
     c.userData.cardBelow = null;
     c.userData.cardAbove = null;
     c.userData.isTopCard = true;
+    c.userData.faceUp = faceUp; // resetear estado individual al global al repartir
     if (c.userData.shadow) {
       c.userData.shadow.material.opacity = 0.25;
       c.userData.shadow.scale.set(1, 1, 1);
@@ -1392,8 +1394,35 @@ function getTableIntersect(event) {
 // ── Voltear carta (compartido: boton, doble tap, click derecho, tecla F) ──
 function flipCard() {
   if (!selectedCard) return;
-  selectedCard.rotation.x += Math.PI;
-  if (highlightLines) highlightLines.rotation.x = selectedCard.rotation.x;
+  
+  // Alternar estado individual cara/dorso (sin rotar geometría)
+  selectedCard.userData.faceUp = !selectedCard.userData.faceUp;
+  const isFaceUp = selectedCard.userData.faceUp;
+  const idx = cartas.indexOf(selectedCard);
+  
+  selectedCard.traverse(child => {
+    if (!child.isMesh) return;
+    if (child.userData.isShadow) return;
+    
+    if (child.userData.isDorso) {
+      child.visible = !isFaceUp;
+      child.renderOrder = !isFaceUp ? idx + 10 : 0;
+      child.position.y = -0.0001 - (idx * 0.00002);
+      return;
+    }
+    
+    if (child.userData.isDorsoBody) {
+      child.visible = false;
+      return;
+    }
+    
+    // GLB meshes (cara de la carta)
+    child.visible = isFaceUp;
+    child.renderOrder = idx + 1;
+  });
+  
+  // NOTA: ya no rotamos la carta físicamente — solo alternamos visibilidad.
+  // El highlightLines no necesita ajuste de rotación porque la carta no rota.
 }
 
 function clearSelection() {
