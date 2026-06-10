@@ -895,13 +895,8 @@ function sincronizarPropsDesdeMapa(stackGroupId) {
     carta.userData.stackHeight = idx * carta.userData.thickness;
     carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
 
-    // Actualizar renderOrder según posición en la pila
-    const ro = idx + 1;
-    carta.traverse(child => {
-      if (child.isMesh && !child.userData.isShadow) {
-        child.renderOrder = ro;
-      }
-    });
+    // Centralizado: renderOrder según posición en la pila
+    actualizarRenderOrder(carta, idx, carta.userData.faceUp !== undefined ? carta.userData.faceUp : faceUp);
 
     console.log('  Carta', idx, ': Y', yAnterior, '->', carta.position.y);
 
@@ -1283,12 +1278,11 @@ function posicionarCartas(mode) {
 function aplicarFaceDirection() {
   cartas.forEach((c, idx) => {
     c.traverse(child => {
-      // Saltar sombra y dorso explícito
+      // Saltar sombra
       if (!child.isMesh) return;
       if (child.userData && child.userData.isShadow) return;
       if (child.userData && child.userData.isDorso) {
         child.visible = !faceUp;
-        child.renderOrder = idx + 1; // mismo renderOrder que GLB (micro-offset Y evita Z-fighting)
         child.position.y = -0.0001 - (idx * 0.00002);
         return;
       }
@@ -1298,8 +1292,9 @@ function aplicarFaceDirection() {
       }
       // Cualquier otra malla (cara del GLB, bordes, etc.) → visible si faceUp
       child.visible = faceUp;
-      child.renderOrder = idx + 1; // orden fijo por índice: no se reordena al orbitar
     });
+    // Centralizado: renderOrder según posición en reparto (stackIndex=0)
+    actualizarRenderOrder(c, 0, faceUp);
   });
 }
 
@@ -1406,7 +1401,6 @@ function flipCard() {
   // Alternar estado individual cara/dorso (sin rotar geometría)
   selectedCard.userData.faceUp = !selectedCard.userData.faceUp;
   const isFaceUp = selectedCard.userData.faceUp;
-  const idx = cartas.indexOf(selectedCard);
   
   selectedCard.traverse(child => {
     if (!child.isMesh) return;
@@ -1414,8 +1408,7 @@ function flipCard() {
     
     if (child.userData.isDorso) {
       child.visible = !isFaceUp;
-      child.renderOrder = !isFaceUp ? idx + 10 : 0;
-      child.position.y = -0.0001 - (idx * 0.00002);
+      child.position.y = -0.0001 - (cartas.indexOf(selectedCard) * 0.00002);
       return;
     }
     
@@ -1426,11 +1419,12 @@ function flipCard() {
     
     // GLB meshes (cara de la carta)
     child.visible = isFaceUp;
-    child.renderOrder = idx + 1;
   });
   
+  // Centralizado: renderOrder según estado individual
+  actualizarRenderOrder(selectedCard, selectedCard.userData.stackIndex || 0, isFaceUp);
+  
   // NOTA: ya no rotamos la carta físicamente — solo alternamos visibilidad.
-  // El highlightLines no necesita ajuste de rotación porque la carta no rota.
 }
 
 function clearSelection() {
@@ -1575,6 +1569,8 @@ function detectarStack(carta) {
     carta.userData.cardBelow = null;
     carta.userData.isTopCard = true;
     carta.userData.stackGroupId = undefined;
+    // Centralizado: renderOrder como carta individual (stackIndex=0)
+    actualizarRenderOrder(carta, 0, carta.userData.faceUp !== undefined ? carta.userData.faceUp : faceUp);
   }
 
   carta.userData.stackHeight = carta.userData.stackIndex * carta.userData.thickness;
@@ -1597,6 +1593,7 @@ function colapsarPilaAlAgarrar(carta) {
       otra.userData.stackHeight = otra.userData.stackIndex * otra.userData.thickness;
       otra.position.y = tableSurfaceY + CARD_OFFSET + otra.userData.stackHeight;
       otra.userData.cardBelow = carta.userData.cardBelow;
+      actualizarRenderOrder(otra, otra.userData.stackIndex, otra.userData.faceUp !== undefined ? otra.userData.faceUp : faceUp);
       colapsarPilaArriba(otra);
       ajustarSombraPorPila(otra);
     }
@@ -1604,6 +1601,7 @@ function colapsarPilaAlAgarrar(carta) {
   carta.userData.cardAbove = null;
   carta.userData.cardBelow = null;
   carta.userData.isTopCard = true;
+  actualizarRenderOrder(carta, 0, carta.userData.faceUp !== undefined ? carta.userData.faceUp : faceUp);
 }
 
 function colapsarPilaArriba(carta) {
@@ -1612,10 +1610,27 @@ function colapsarPilaArriba(carta) {
       otra.userData.stackIndex = carta.userData.stackIndex + 1;
       otra.userData.stackHeight = otra.userData.stackIndex * otra.userData.thickness;
       otra.position.y = tableSurfaceY + CARD_OFFSET + otra.userData.stackHeight;
+      actualizarRenderOrder(otra, otra.userData.stackIndex, otra.userData.faceUp !== undefined ? otra.userData.faceUp : faceUp);
       colapsarPilaArriba(otra);
       ajustarSombraPorPila(otra);
     }
   }
+}
+
+// ── Función centralizada de renderOrder ──
+function actualizarRenderOrder(carta, stackIndex, isFaceUp) {
+  // Fórmula unificada:
+  // - stackIndex * 10 → orden de pila (cada nivel +10)
+  // - isFaceUp ? 1 : 100 → cara=1, dorso=100 (dorsos siempre encima)
+  const baseRO = stackIndex * 10;
+  const faceRO = isFaceUp ? 1 : 100;
+  const ro = baseRO + faceRO;
+
+  carta.traverse(child => {
+    if (child.isMesh && !child.userData.isShadow) {
+      child.renderOrder = ro;
+    }
+  });
 }
 
 function ajustarSombraPorPila(carta) {
