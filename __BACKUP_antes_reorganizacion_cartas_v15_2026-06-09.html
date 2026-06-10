@@ -40,14 +40,6 @@ canvas{cursor:none!important}
 .toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#8a8478;transition:all 0.2s}
 .toggle-switch.on::after{left:16px;background:#c8b898}
 
-/* ── Toggle Cara/Dorso deslizante ── */
-.face-row{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 2px;gap:6px;cursor:pointer;user-select:none}
-.face-label{font-size:11px;color:#6a6458;transition:color 0.2s}
-.face-label.active{color:#c8b898}
-.face-track{width:36px;height:18px;background:#3a3428;border-radius:9px;position:relative;flex-shrink:0;pointer-events:none}
-.face-knob{width:14px;height:14px;border-radius:50%;background:#8a8478;position:absolute;top:2px;left:2px;transition:all 0.25s ease}
-.face-track.dorso .face-knob{left:20px;background:#c8b898}
-
 /* ── Botón de bloqueo ── */
 .lock-btn{font-size:14px;cursor:pointer;opacity:0.5;transition:opacity 0.2s;padding:2px 6px;border-radius:4px;user-select:none;display:inline-block}
 .lock-btn:hover{opacity:1;background:rgba(255,255,255,0.06)}
@@ -64,9 +56,9 @@ canvas{cursor:none!important}
 .dorso-dropdown option{background:#1a1814;color:#c8b898}
 
 /* ── Selector de baraja ── */
-.decks-select{width:100%;background:rgba(20,18,14,0.9);color:#c8b898;border:1px solid rgba(200,184,152,0.2);border-radius:6px;padding:5px 8px;font-size:12px;font-family:inherit;cursor:pointer;margin:4px 0}
-.decks-select option{background:#1a1814;color:#c8b898}
-.decks-select:hover{border-color:rgba(200,184,152,0.4)}
+.deck-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s}
+.deck-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
+.deck-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
 
 /* ── Selector de tapete ── */
 .tapete-select{display:flex;gap:4px;margin:6px 0 0 8px;opacity:0.5;pointer-events:none;transition:opacity 0.3s;flex-wrap:wrap}
@@ -77,11 +69,8 @@ canvas{cursor:none!important}
 .tapete-btn .color-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
 
 /* ── Modo de cartas ── */
-.mode-select{display:flex;gap:4px;align-items:center}
-.mode-select-inline{flex:1;background:rgba(20,18,14,0.9);color:#c8b898;border:1px solid rgba(200,184,152,0.2);border-radius:6px;padding:4px 6px;font-size:11px;font-family:inherit;cursor:pointer}
-.mode-select-inline option{background:#1a1814;color:#c8b898}
-.mode-select-inline:hover{border-color:rgba(200,184,152,0.4)}
-.mode-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s;white-space:nowrap}
+.mode-select{display:flex;gap:4px}
+.mode-btn{background:transparent;border:1px solid rgba(200,184,152,0.15);color:#6a6458;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s}
 .mode-btn:hover{color:#c8b898;border-color:rgba(200,184,152,0.3)}
 .mode-btn.active{color:#c8b898;border-color:#c8b898;background:rgba(200,184,152,0.1)}
 #reset-cards{padding:3px 8px;font-size:10px}
@@ -164,12 +153,10 @@ canvas{cursor:none!important}
       <span class=collapse-icon>▼</span>
     </div>
     <div class=collapsible-body>
-      <select class=decks-select id=deck-select>
-        <option value="poker_normal">♠ Poker</option>
-        <option value="poker_cartoon">😄 Cartoon</option>
-        <option value="espanola_40">🇪🇸 Española 40</option>
-        <option value="espanola_48">🇪🇸 Española 48</option>
-      </select>
+      <button class="deck-btn active" data-deck="poker_normal">♠ Poker</button>
+      <button class="deck-btn" data-deck="poker_cartoon">😄 Cartoon</button>
+      <button class="deck-btn" data-deck="espanola_40">🇪🇸 Española 40</button>
+      <button class="deck-btn" data-deck="espanola_48">🇪🇸 Española 48</button>
     </div>
   </div>
   <div class=collapsible id=coll-dorso style=display:none>
@@ -191,20 +178,11 @@ canvas{cursor:none!important}
       <span class=collapse-icon>▼</span>
     </div>
     <div class=collapsible-body>
-      <div class="face-row" id="face-toggle">
-        <span class="face-label active" data-face="up">Cara</span>
-        <div class="face-track" id="face-track">
-          <div class="face-knob"></div>
-        </div>
-        <span class="face-label" data-face="down">Dorso</span>
-      </div>
-      <div class=mode-select id=card-options>
-        <select class=mode-select-inline id=mode-select>
-          <option value="fan">🃏 Abanico</option>
-          <option value="row">📏 Fila</option>
-          <option value="scatter">🖐️ Libres</option>
-        </select>
-        <button class=mode-btn id=reset-cards>⟲ Repartir</button>
+      <div class=mode-select id=card-options style=opacity:1;pointer-events:auto;margin:0>
+        <button class="mode-btn active" data-mode="fan">🃏 Abanico</button>
+        <button class="mode-btn" data-mode="row">📏 Fila</button>
+        <button class="mode-btn" data-mode="scatter">🖐️ Libres</button>
+        <button class="mode-btn" id="reset-cards">⟲ Repartir</button>
       </div>
     </div>
   </div>
@@ -232,26 +210,19 @@ canvas{cursor:none!important}
   <input type=range id=zoomSlider min=0.5 max=8 step=0.1 value=2.5>
   <div class=zoom-labels><span>3D</span><span>▼ cenital</span></div>
 
-  <div class=collapsible id=coll-debug>
-    <div class=collapsible-header data-collapse=debug role=button aria-expanded=false tabindex=0>
-      <span>🐛 DEBUG</span>
-      <span class=collapse-icon>▼</span>
-    </div>
-    <div class=collapsible-body>
-      <div class=toggle-row id=debug-toggle>
-        <span class="toggle-switch"></span> Identidad de carta
-      </div>
-      <button id="btn-descargar-logs" style="display:block;width:calc(100% - 8px);margin:6px 0 0 0;background:rgba(200,100,100,0.08);border:1px solid rgba(200,100,100,0.15);color:#cc8888;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit">📋 Descargar Logs</button>
+  <div class=section style="margin-top:8px">🐛 Debug</div>
+  <div class=toggle-row id=debug-toggle>
+    <span class="toggle-switch"></span> Identidad de carta
+  </div>
+  <button id="btn-descargar-logs" style="display:block;width:calc(100% - 8px);margin:6px 0 0 8px;background:rgba(200,100,100,0.08);border:1px solid rgba(200,100,100,0.15);color:#cc8888;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-family:inherit">📋 Descargar Logs</button>
 
-      <div class=section>🧪 Tests</div>
-      <button id="btn-run-tests" style="display:block;width:calc(100% - 8px);margin:6px 0 0 0;background:rgba(100,150,100,0.1);border:1px solid rgba(100,150,100,0.3);color:#aacc88;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit">▶ Ejecutar Tests</button>
-      <button id="btn-export-tests" style="display:none;width:calc(100% - 8px);margin:4px 0 0 0;background:rgba(100,100,150,0.1);border:1px solid rgba(100,100,150,0.3);color:#aaaacc;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit">📤 Exportar</button>
-      <div id="tests-results" style="display:none;margin:8px 0 0 0;max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.4);padding:6px 8px;border-radius:6px;font-size:10px;font-family:monospace"></div>
-      <div id="tests-summary" style="display:none;margin:6px 0 0 0;font-size:11px">
-        <span style="color:#4caf50">✅ <span id="tests-passed">0</span></span>
-        <span style="color:#f44336;margin-left:8px">❌ <span id="tests-failed">0</span></span>
-      </div>
-    </div>
+  <div class=section style=margin-top:12px>🧪 Tests</div>
+  <button id="btn-run-tests" style="display:block;width:calc(100% - 8px);margin:6px 0 0 8px;background:rgba(100,150,100,0.1);border:1px solid rgba(100,150,100,0.3);color:#aacc88;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit">▶ Ejecutar Tests</button>
+  <button id="btn-export-tests" style="display:none;width:calc(100% - 8px);margin:4px 0 0 8px;background:rgba(100,100,150,0.1);border:1px solid rgba(100,100,150,0.3);color:#aaaacc;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit">📤 Exportar</button>
+  <div id="tests-results" style="display:none;margin:8px 0 0 8px;max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.4);padding:6px 8px;border-radius:6px;font-size:10px;font-family:monospace"></div>
+  <div id="tests-summary" style="display:none;margin:6px 0 0 8px;font-size:11px">
+    <span style="color:#4caf50">✅ <span id="tests-passed">0</span></span>
+    <span style="color:#f44336;margin-left:8px">❌ <span id="tests-failed">0</span></span>
   </div>
 </div>
 </div>
@@ -393,8 +364,6 @@ const PanelStore = {
     barajaCollapsed: false,
     dorsoCollapsed: false,
     modoCollapsed: false,
-    debugCollapsed: true,
-    faceUp: true,
   },
 
   _data: null,
@@ -470,47 +439,22 @@ const PanelStore = {
       if (el) { el.classList.add('collapsed'); const b=el.querySelector('.collapsible-body'); if(b)b.classList.add('collapsed'); const h=el.querySelector('.collapsible-header'); if(h)h.setAttribute('aria-expanded','false'); }
     }
 
-    // Debug colapsado (default: cerrado)
-    if (d.debugCollapsed) {
-      const el = document.getElementById('coll-debug');
-      if (el) { el.classList.add('collapsed'); const b=el.querySelector('.collapsible-body'); if(b)b.classList.add('collapsed'); const h=el.querySelector('.collapsible-header'); if(h)h.setAttribute('aria-expanded','false'); }
-    }
-
     // Zoom
     const zs = document.querySelector('#zoomSlider');
     if (zs) zs.value = d.zoom;
 
     // Debug overlay
     if (d.debugIdentidad) {
-      debugMode = true;
       const dt = document.querySelector('#debug-toggle');
       if (dt) { dt.classList.add('active'); dt.querySelector('.toggle-switch').classList.add('on'); }
+      const ov = document.querySelector('#debug-overlay');
+      if (ov) ov.style.display = 'block';
     }
 
     // Mesa guardada
     const btn = document.querySelector(`.mesa-btn[data-model="${d.model}"]`);
     if (btn) { btn.click(); }
     else { const fb = document.querySelector('.mesa-btn'); if (fb) fb.click(); }
-
-    // Sincronizar baraja y modo con lo guardado
-    currentDeck = d.deck;
-    const ds = document.querySelector('#deck-select');
-    if (ds) { ds.value = currentDeck; }
-    cardMode = d.mode;
-    const ms = document.querySelector('#mode-select');
-    if (ms) { ms.value = cardMode; }
-
-    // Sincronizar cara/dorso con lo guardado
-    faceUp = d.faceUp !== undefined ? d.faceUp : true;
-    const ft = document.querySelector('#face-toggle');
-    if (ft) {
-      const upLabel = ft.querySelector('[data-face="up"]');
-      const downLabel = ft.querySelector('[data-face="down"]');
-      const track = ft.querySelector('.face-track');
-      if (upLabel) upLabel.classList.toggle('active', faceUp);
-      if (downLabel) downLabel.classList.toggle('active', !faceUp);
-      if (track) track.classList.toggle('dorso', !faceUp);
-    }
   }
 };
 
@@ -531,7 +475,6 @@ document.addEventListener('click', (e) => {
   if (coll.id === 'coll-baraja') PanelStore.set('barajaCollapsed', !was);
   if (coll.id === 'coll-dorso') PanelStore.set('dorsoCollapsed', !was);
   if (coll.id === 'coll-modo') PanelStore.set('modoCollapsed', !was);
-  if (coll.id === 'coll-debug') PanelStore.set('debugCollapsed', !was);
 });
 
 // ── Sistema de logging interno ──
@@ -580,10 +523,6 @@ function cargarTexturaDorso(sourceKey, file) {
         c.userData.dorsoMesh.material.map = tex;
         c.userData.dorsoMesh.material.needsUpdate = true;
       }
-      if (c.userData.dorsoBodyMesh) {
-        c.userData.dorsoBodyMesh.material.map = tex;
-        c.userData.dorsoBodyMesh.material.needsUpdate = true;
-      }
     });
   });
 }
@@ -613,8 +552,6 @@ function anadirDorso(carta) {
     side: THREE.DoubleSide,
     roughness: 0.7,
     metalness: 0,
-    transparent: true,
-    opacity: 1.0,
   });
   const dorsoPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(cardW, cardH),
@@ -623,29 +560,8 @@ function anadirDorso(carta) {
   dorsoPlane.rotation.x = -Math.PI / 2; // horizontal (misma orientación que la carta)
   dorsoPlane.position.y = -0.0001; // ligeramente bajo la carta, pegado
   dorsoPlane.userData.isDorso = true;
-  dorsoPlane.renderOrder = 1;
-  // visible = true por defecto, aplicarFaceDirection controla visibilidad
   carta.add(dorsoPlane);
   carta.userData.dorsoMesh = dorsoPlane;
-
-  // Cuerpo 3D del dorso: caja fina con textura de dorso (da presencia 3D)
-  const bodyMat = new THREE.MeshStandardMaterial({
-    map: dorsoTexture,
-    roughness: 0.7,
-    metalness: 0,
-    polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
-  });
-  const dorsoBody = new THREE.Mesh(
-    new THREE.BoxGeometry(cardW, 0.0003, cardH),
-    bodyMat
-  );
-  dorsoBody.position.y = 0;
-  dorsoBody.userData.isDorsoBody = true;
-  dorsoBody.visible = false; // oculto por defecto (solo visible en modo Dorso)
-  carta.add(dorsoBody);
-  carta.userData.dorsoBodyMesh = dorsoBody;
 }
 
 // Poblar dropdown + cargar textura de dorso por defecto al inicio
@@ -674,7 +590,8 @@ document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0.5, 0);
-controls.enableDamping = false;
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
 controls.minDistance = 0.5;
 controls.maxDistance = 6;
 controls.minPolarAngle = 0;
@@ -873,8 +790,6 @@ let isDragging = false;
 
 const locks = { tapete: true, cartas: false };
 let debugMode = false;
-
-let faceUp = true; // Cara (true) o Dorso (false) al repartir
 
 // ── Mapa global de pilas ──
 const pilas = new Map();
@@ -1267,30 +1182,6 @@ function posicionarCartas(mode) {
       c.rotation.set(0, Math.random() * Math.PI * 2, 0);
     });
   }
-  aplicarFaceDirection();
-}
-
-// ── Aplicar cara/dorso a todas las cartas (sin cambiar geometría) ──
-function aplicarFaceDirection() {
-  cartas.forEach((c, idx) => {
-    c.traverse(child => {
-      // Saltar sombra y dorso explícito
-      if (!child.isMesh) return;
-      if (child.userData && child.userData.isShadow) return;
-      if (child.userData && child.userData.isDorso) {
-        child.visible = !faceUp;
-        child.renderOrder = !faceUp ? idx + 10 : 0;
-        return;
-      }
-      if (child.userData && child.userData.isDorsoBody) {
-        child.visible = false; // no usado, el plano de dorso basta
-        return;
-      }
-      // Cualquier otra malla (cara del GLB, bordes, etc.) → visible si faceUp
-      child.visible = faceUp;
-      child.renderOrder = idx + 1; // orden fijo por índice: no se reordena al orbitar
-    });
-  });
 }
 
 function mostrarCartas(show) {
@@ -2079,16 +1970,20 @@ document.querySelector('#debug-toggle').addEventListener('click', () => {
   PanelStore.set('debugIdentidad', debugMode);
 });
 
-// ── Selector de baraja (dropdown) ──
-document.querySelector('#deck-select').addEventListener('change', (e) => {
-  const newDeck = e.target.value;
-  if (newDeck !== currentDeck && layers.cartas.visible) {
-    currentDeck = newDeck;
-    cargarBaraja(currentDeck);
-  } else {
-    currentDeck = newDeck;
-  }
-  PanelStore.set('deck', currentDeck);
+// ── Selector de baraja ──
+document.querySelectorAll('.deck-btn[data-deck]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.deck-btn[data-deck]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const newDeck = btn.dataset.deck;
+    if (newDeck !== currentDeck && layers.cartas.visible) {
+      currentDeck = newDeck;
+      cargarBaraja(currentDeck);
+    } else {
+      currentDeck = newDeck;
+    }
+    PanelStore.set('deck', currentDeck);
+  });
 });
 
 // ── Selector de dorso: fuente (Zeta / Miguel Gil) ──
@@ -2126,26 +2021,17 @@ document.querySelectorAll('.tapete-btn[data-tapete]').forEach(btn => {
   });
 });
 
-// ── Toggle Cara/Dorso ──
-document.querySelector('#face-toggle').addEventListener('click', () => {
-  faceUp = !faceUp;
-  const upLabel = document.querySelector('[data-face="up"]');
-  const downLabel = document.querySelector('[data-face="down"]');
-  const track = document.querySelector('.face-track');
-  if (upLabel) upLabel.classList.toggle('active', faceUp);
-  if (downLabel) downLabel.classList.toggle('active', !faceUp);
-  if (track) track.classList.toggle('dorso', !faceUp);
-  PanelStore.set('faceUp', faceUp);
-  // NO reposiciona cartas — solo afecta al próximo Repartir
-});
-
-// ── Modo de cartas (dropdown + Repartir) ──
-document.querySelector('#mode-select').addEventListener('change', (e) => {
-  cardMode = e.target.value;
-  if (layers.cartas.visible) {
-    posicionarCartas(cardMode);
-  }
-  PanelStore.set('mode', cardMode);
+// ── Modo de cartas ──
+document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    cardMode = btn.dataset.mode;
+    if (layers.cartas.visible) {
+      posicionarCartas(cardMode);
+    }
+    PanelStore.set('mode', cardMode);
+  });
 });
 
 document.querySelector('#reset-cards').addEventListener('click', () => {

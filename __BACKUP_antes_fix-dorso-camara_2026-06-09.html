@@ -40,14 +40,6 @@ canvas{cursor:none!important}
 .toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#8a8478;transition:all 0.2s}
 .toggle-switch.on::after{left:16px;background:#c8b898}
 
-/* ── Toggle Cara/Dorso deslizante ── */
-.face-row{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 2px;gap:6px;cursor:pointer;user-select:none}
-.face-label{font-size:11px;color:#6a6458;transition:color 0.2s}
-.face-label.active{color:#c8b898}
-.face-track{width:36px;height:18px;background:#3a3428;border-radius:9px;position:relative;flex-shrink:0;pointer-events:none}
-.face-knob{width:14px;height:14px;border-radius:50%;background:#8a8478;position:absolute;top:2px;left:2px;transition:all 0.25s ease}
-.face-track.dorso .face-knob{left:20px;background:#c8b898}
-
 /* ── Botón de bloqueo ── */
 .lock-btn{font-size:14px;cursor:pointer;opacity:0.5;transition:opacity 0.2s;padding:2px 6px;border-radius:4px;user-select:none;display:inline-block}
 .lock-btn:hover{opacity:1;background:rgba(255,255,255,0.06)}
@@ -191,13 +183,6 @@ canvas{cursor:none!important}
       <span class=collapse-icon>▼</span>
     </div>
     <div class=collapsible-body>
-      <div class="face-row" id="face-toggle">
-        <span class="face-label active" data-face="up">Cara</span>
-        <div class="face-track" id="face-track">
-          <div class="face-knob"></div>
-        </div>
-        <span class="face-label" data-face="down">Dorso</span>
-      </div>
       <div class=mode-select id=card-options>
         <select class=mode-select-inline id=mode-select>
           <option value="fan">🃏 Abanico</option>
@@ -394,7 +379,6 @@ const PanelStore = {
     dorsoCollapsed: false,
     modoCollapsed: false,
     debugCollapsed: true,
-    faceUp: true,
   },
 
   _data: null,
@@ -482,9 +466,10 @@ const PanelStore = {
 
     // Debug overlay
     if (d.debugIdentidad) {
-      debugMode = true;
       const dt = document.querySelector('#debug-toggle');
       if (dt) { dt.classList.add('active'); dt.querySelector('.toggle-switch').classList.add('on'); }
+      const ov = document.querySelector('#debug-overlay');
+      if (ov) ov.style.display = 'block';
     }
 
     // Mesa guardada
@@ -493,24 +478,10 @@ const PanelStore = {
     else { const fb = document.querySelector('.mesa-btn'); if (fb) fb.click(); }
 
     // Sincronizar baraja y modo con lo guardado
-    currentDeck = d.deck;
     const ds = document.querySelector('#deck-select');
-    if (ds) { ds.value = currentDeck; }
-    cardMode = d.mode;
+    if (ds) { ds.value = d.deck; }
     const ms = document.querySelector('#mode-select');
-    if (ms) { ms.value = cardMode; }
-
-    // Sincronizar cara/dorso con lo guardado
-    faceUp = d.faceUp !== undefined ? d.faceUp : true;
-    const ft = document.querySelector('#face-toggle');
-    if (ft) {
-      const upLabel = ft.querySelector('[data-face="up"]');
-      const downLabel = ft.querySelector('[data-face="down"]');
-      const track = ft.querySelector('.face-track');
-      if (upLabel) upLabel.classList.toggle('active', faceUp);
-      if (downLabel) downLabel.classList.toggle('active', !faceUp);
-      if (track) track.classList.toggle('dorso', !faceUp);
-    }
+    if (ms) { ms.value = d.mode; }
   }
 };
 
@@ -580,10 +551,6 @@ function cargarTexturaDorso(sourceKey, file) {
         c.userData.dorsoMesh.material.map = tex;
         c.userData.dorsoMesh.material.needsUpdate = true;
       }
-      if (c.userData.dorsoBodyMesh) {
-        c.userData.dorsoBodyMesh.material.map = tex;
-        c.userData.dorsoBodyMesh.material.needsUpdate = true;
-      }
     });
   });
 }
@@ -613,8 +580,6 @@ function anadirDorso(carta) {
     side: THREE.DoubleSide,
     roughness: 0.7,
     metalness: 0,
-    transparent: true,
-    opacity: 1.0,
   });
   const dorsoPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(cardW, cardH),
@@ -623,29 +588,8 @@ function anadirDorso(carta) {
   dorsoPlane.rotation.x = -Math.PI / 2; // horizontal (misma orientación que la carta)
   dorsoPlane.position.y = -0.0001; // ligeramente bajo la carta, pegado
   dorsoPlane.userData.isDorso = true;
-  dorsoPlane.renderOrder = 1;
-  // visible = true por defecto, aplicarFaceDirection controla visibilidad
   carta.add(dorsoPlane);
   carta.userData.dorsoMesh = dorsoPlane;
-
-  // Cuerpo 3D del dorso: caja fina con textura de dorso (da presencia 3D)
-  const bodyMat = new THREE.MeshStandardMaterial({
-    map: dorsoTexture,
-    roughness: 0.7,
-    metalness: 0,
-    polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
-  });
-  const dorsoBody = new THREE.Mesh(
-    new THREE.BoxGeometry(cardW, 0.0003, cardH),
-    bodyMat
-  );
-  dorsoBody.position.y = 0;
-  dorsoBody.userData.isDorsoBody = true;
-  dorsoBody.visible = false; // oculto por defecto (solo visible en modo Dorso)
-  carta.add(dorsoBody);
-  carta.userData.dorsoBodyMesh = dorsoBody;
 }
 
 // Poblar dropdown + cargar textura de dorso por defecto al inicio
@@ -674,7 +618,8 @@ document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0.5, 0);
-controls.enableDamping = false;
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
 controls.minDistance = 0.5;
 controls.maxDistance = 6;
 controls.minPolarAngle = 0;
@@ -873,8 +818,6 @@ let isDragging = false;
 
 const locks = { tapete: true, cartas: false };
 let debugMode = false;
-
-let faceUp = true; // Cara (true) o Dorso (false) al repartir
 
 // ── Mapa global de pilas ──
 const pilas = new Map();
@@ -1267,30 +1210,6 @@ function posicionarCartas(mode) {
       c.rotation.set(0, Math.random() * Math.PI * 2, 0);
     });
   }
-  aplicarFaceDirection();
-}
-
-// ── Aplicar cara/dorso a todas las cartas (sin cambiar geometría) ──
-function aplicarFaceDirection() {
-  cartas.forEach((c, idx) => {
-    c.traverse(child => {
-      // Saltar sombra y dorso explícito
-      if (!child.isMesh) return;
-      if (child.userData && child.userData.isShadow) return;
-      if (child.userData && child.userData.isDorso) {
-        child.visible = !faceUp;
-        child.renderOrder = !faceUp ? idx + 10 : 0;
-        return;
-      }
-      if (child.userData && child.userData.isDorsoBody) {
-        child.visible = false; // no usado, el plano de dorso basta
-        return;
-      }
-      // Cualquier otra malla (cara del GLB, bordes, etc.) → visible si faceUp
-      child.visible = faceUp;
-      child.renderOrder = idx + 1; // orden fijo por índice: no se reordena al orbitar
-    });
-  });
 }
 
 function mostrarCartas(show) {
@@ -2124,19 +2043,6 @@ document.querySelectorAll('.tapete-btn[data-tapete]').forEach(btn => {
     }
     PanelStore.set('tapeteColor', currentTapete);
   });
-});
-
-// ── Toggle Cara/Dorso ──
-document.querySelector('#face-toggle').addEventListener('click', () => {
-  faceUp = !faceUp;
-  const upLabel = document.querySelector('[data-face="up"]');
-  const downLabel = document.querySelector('[data-face="down"]');
-  const track = document.querySelector('.face-track');
-  if (upLabel) upLabel.classList.toggle('active', faceUp);
-  if (downLabel) downLabel.classList.toggle('active', !faceUp);
-  if (track) track.classList.toggle('dorso', !faceUp);
-  PanelStore.set('faceUp', faceUp);
-  // NO reposiciona cartas — solo afecta al próximo Repartir
 });
 
 // ── Modo de cartas (dropdown + Repartir) ──
