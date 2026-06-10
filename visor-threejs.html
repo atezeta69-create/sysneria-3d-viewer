@@ -361,7 +361,7 @@ let currentDorsoFile = DORSO_SOURCES.zeta.dorsos[0].file;
 const dorsoTextureLoader = new THREE.TextureLoader();
 let dorsoTexture = null; // textura del dorso actual
 const CARD_SCALE = 0.8;
-const CARD_LIFT = 0.015;
+const CARD_LIFT = 0.025;
 const TAPETE_THICKNESS = 0.003; // grosor del tapete (~3mm)
 const CARD_OFFSET = TAPETE_THICKNESS / 2 + 0.001; // cartas justo encima del tapete
 
@@ -895,6 +895,14 @@ function sincronizarPropsDesdeMapa(stackGroupId) {
     carta.userData.stackHeight = idx * carta.userData.thickness;
     carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
 
+    // Actualizar renderOrder según posición en la pila
+    const ro = idx + 1;
+    carta.traverse(child => {
+      if (child.isMesh && !child.userData.isShadow) {
+        child.renderOrder = ro;
+      }
+    });
+
     console.log('  Carta', idx, ': Y', yAnterior, '->', carta.position.y);
 
   // Forzar actualización de matriz tras cambiar Y
@@ -1280,7 +1288,7 @@ function aplicarFaceDirection() {
       if (child.userData && child.userData.isShadow) return;
       if (child.userData && child.userData.isDorso) {
         child.visible = !faceUp;
-        child.renderOrder = !faceUp ? idx + 10 : 0;
+        child.renderOrder = idx + 1; // mismo renderOrder que GLB (micro-offset Y evita Z-fighting)
         child.position.y = -0.0001 - (idx * 0.00002);
         return;
       }
