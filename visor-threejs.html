@@ -613,8 +613,7 @@ function anadirDorso(carta) {
     side: THREE.DoubleSide,
     roughness: 0.7,
     metalness: 0,
-    transparent: true,
-    opacity: 1.0,
+    transparent: false,
   });
   const dorsoPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(cardW, cardH),
@@ -1280,6 +1279,7 @@ function aplicarFaceDirection() {
       if (child.userData && child.userData.isDorso) {
         child.visible = !faceUp;
         child.renderOrder = !faceUp ? idx + 10 : 0;
+        child.position.y = -0.0001 - (idx * 0.00002);
         return;
       }
       if (child.userData && child.userData.isDorsoBody) {
