@@ -620,7 +620,7 @@ function anadirDorso(carta) {
     dorsoMat
   );
   dorsoPlane.rotation.x = -Math.PI / 2; // horizontal (misma orientación que la carta)
-  dorsoPlane.position.y = -0.0001; // ligeramente bajo la carta, pegado
+  dorsoPlane.position.y = -0.0001; // constante: solo separa cara/dorso de la misma carta
   dorsoPlane.userData.isDorso = true;
   dorsoPlane.renderOrder = 1;
   // visible = true por defecto, aplicarFaceDirection controla visibilidad
@@ -874,6 +874,7 @@ const locks = { tapete: true, cartas: false };
 let debugMode = false;
 
 let faceUp = true; // Cara (true) o Dorso (false) al repartir
+let secuenciaSoltado = 0; // micro-incremento Y por orden de soltado (solape libre entre opacas)
 
 // ── Mapa global de pilas ──
 const pilas = new Map();
@@ -1135,7 +1136,17 @@ function cargarBaraja(deckKey) {
     const url = deck.path + filename;
     cardLoader.load(url, (gltf) => {
       const m = gltf.scene;
-      m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+      m.traverse(c => {
+        if (c.isMesh) {
+          c.castShadow = true;
+          c.receiveShadow = true;
+          if (c.material) {
+            c.material.transparent = false;
+            c.material.depthWrite = true;
+            c.material.alphaTest = 0.5;
+          }
+        }
+      });
       m.userData.isCard = true;
       m.userData.draggable = true;
       m.userData.cardIndex = index;
@@ -1214,6 +1225,8 @@ function posicionarCartas(mode) {
   const n = cartas.length;
   if (n === 0) return;
 
+  secuenciaSoltado = 0; // reseteo por reparto
+
   // Resetear estado de stacking al reposicionar
   cartas.forEach(c => {
     c.userData.stackIndex = 0;
@@ -1278,19 +1291,18 @@ function posicionarCartas(mode) {
 function aplicarFaceDirection() {
   cartas.forEach((c, idx) => {
     c.traverse(child => {
-      // Saltar sombra
+
       if (!child.isMesh) return;
       if (child.userData && child.userData.isShadow) return;
       if (child.userData && child.userData.isDorso) {
         child.visible = !faceUp;
-        child.position.y = -0.0001 - (idx * 0.00002);
+
         return;
       }
       if (child.userData && child.userData.isDorsoBody) {
-        child.visible = false; // no usado, el plano de dorso basta
+        child.visible = false;
         return;
       }
-      // Cualquier otra malla (cara del GLB, bordes, etc.) → visible si faceUp
       child.visible = faceUp;
     });
     // Centralizado: renderOrder según posición en reparto (stackIndex=0)
@@ -1569,12 +1581,16 @@ function detectarStack(carta) {
     carta.userData.cardBelow = null;
     carta.userData.isTopCard = true;
     carta.userData.stackGroupId = undefined;
-    // Centralizado: renderOrder como carta individual (stackIndex=0)
-    actualizarRenderOrder(carta, 0, carta.userData.faceUp !== undefined ? carta.userData.faceUp : faceUp);
+    // Solape libre: micro-incremento Y por orden de soltado para evitar z-fighting entre opacas
+    secuenciaSoltado++;
+    carta.position.y = tableSurfaceY + CARD_OFFSET + secuenciaSoltado * 0.00005;
+
   }
 
   carta.userData.stackHeight = carta.userData.stackIndex * carta.userData.thickness;
-  carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
+  if (carta.userData.stackIndex > 0) {
+    carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
+  }
   ajustarSombraPorPila(carta);
 }
 
