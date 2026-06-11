@@ -787,8 +787,20 @@ function enterCursorState(newState) {
   }
 }
 
-function startGrabCursor() { if (cursorState === 'reposo') enterCursorState('abriendo'); }
-function startReleaseCursor() { if (cursorState === 'agarrado') enterCursorState('soltando'); }
+function startGrabCursor() {
+  // Forzar estado agarrado inmediato, cancelando animación en curso
+  cursorFading = false;
+  cursorPendingState = '';
+  Object.keys(cursorModels).forEach(k => setCursorVisible(k, k === 'punio'));
+  cursorState = 'agarrado';
+}
+function startReleaseCursor() {
+  // Forzar estado reposo inmediato, cancelando animación en curso
+  cursorFading = false;
+  cursorPendingState = '';
+  Object.keys(cursorModels).forEach(k => setCursorVisible(k, k === 'mano_abierta'));
+  cursorState = 'reposo';
+}
 
 // Escala y orientación de la mano
 const CURSOR_SCALE = 1.2;
@@ -896,8 +908,8 @@ function sincronizarPropsDesdeMapa(stackGroupId) {
     carta.userData.stackHeight = idx * carta.userData.thickness;
     carta.position.y = tableSurfaceY + CARD_OFFSET + carta.userData.stackHeight;
 
-    // Centralizado: renderOrder según posición en la pila
-    actualizarRenderOrder(carta, idx, carta.userData.faceUp !== undefined ? carta.userData.faceUp : faceUp);
+    // Profundidad por stackIndex (sin sufijo face/dorso)
+    aplicarProfundidadCarta(carta, idx);
 
     console.log('  Carta', idx, ': Y', yAnterior, '->', carta.position.y);
 
@@ -1305,8 +1317,8 @@ function aplicarFaceDirection() {
       }
       child.visible = faceUp;
     });
-    // Centralizado: renderOrder según posición en reparto (stackIndex=0)
-    actualizarRenderOrder(c, 0, faceUp);
+    // Profundidad por stackIndex (sin sufijo face/dorso)
+    aplicarProfundidadCarta(c, 0);
   });
 }
 
@@ -1420,7 +1432,6 @@ function flipCard() {
     
     if (child.userData.isDorso) {
       child.visible = !isFaceUp;
-      child.position.y = -0.0001 - (cartas.indexOf(selectedCard) * 0.00002);
       return;
     }
     
@@ -1433,10 +1444,8 @@ function flipCard() {
     child.visible = isFaceUp;
   });
   
-  // Centralizado: renderOrder según estado individual
-  actualizarRenderOrder(selectedCard, selectedCard.userData.stackIndex || 0, isFaceUp);
-  
-  // NOTA: ya no rotamos la carta físicamente — solo alternamos visibilidad.
+  // Profundidad por stackIndex (sin sufijo face/dorso)
+  aplicarProfundidadCarta(selectedCard, selectedCard.userData.stackIndex || 0);
 }
 
 function clearSelection() {
@@ -1609,7 +1618,7 @@ function colapsarPilaAlAgarrar(carta) {
       otra.userData.stackHeight = otra.userData.stackIndex * otra.userData.thickness;
       otra.position.y = tableSurfaceY + CARD_OFFSET + otra.userData.stackHeight;
       otra.userData.cardBelow = carta.userData.cardBelow;
-      actualizarRenderOrder(otra, otra.userData.stackIndex, otra.userData.faceUp !== undefined ? otra.userData.faceUp : faceUp);
+      aplicarProfundidadCarta(otra, otra.userData.stackIndex);
       colapsarPilaArriba(otra);
       ajustarSombraPorPila(otra);
     }
@@ -1617,7 +1626,7 @@ function colapsarPilaAlAgarrar(carta) {
   carta.userData.cardAbove = null;
   carta.userData.cardBelow = null;
   carta.userData.isTopCard = true;
-  actualizarRenderOrder(carta, 0, carta.userData.faceUp !== undefined ? carta.userData.faceUp : faceUp);
+  aplicarProfundidadCarta(carta, 0);
 }
 
 function colapsarPilaArriba(carta) {
@@ -1626,22 +1635,18 @@ function colapsarPilaArriba(carta) {
       otra.userData.stackIndex = carta.userData.stackIndex + 1;
       otra.userData.stackHeight = otra.userData.stackIndex * otra.userData.thickness;
       otra.position.y = tableSurfaceY + CARD_OFFSET + otra.userData.stackHeight;
-      actualizarRenderOrder(otra, otra.userData.stackIndex, otra.userData.faceUp !== undefined ? otra.userData.faceUp : faceUp);
+      aplicarProfundidadCarta(otra, otra.userData.stackIndex);
       colapsarPilaArriba(otra);
       ajustarSombraPorPila(otra);
     }
   }
 }
 
-// ── Función centralizada de renderOrder ──
-function actualizarRenderOrder(carta, stackIndex, isFaceUp) {
-  // Fórmula unificada:
-  // - stackIndex * 10 → orden de pila (cada nivel +10)
-  // - isFaceUp ? 1 : 100 → cara=1, dorso=100 (dorsos siempre encima)
-  const baseRO = stackIndex * 10;
-  const faceRO = isFaceUp ? 1 : 100;
-  const ro = baseRO + faceRO;
-
+// ── Profundidad de carta por stackIndex (sin sufijo face/dorso) ──
+// Con materiales opacos, el depth buffer resuelve cara vs dorso por Y real.
+// renderOrder solo separa por nivel de pila para evitar conflictos de profundidad.
+function aplicarProfundidadCarta(carta, stackIndex) {
+  const ro = (stackIndex || 0) * 1000;
   carta.traverse(child => {
     if (child.isMesh && !child.userData.isShadow) {
       child.renderOrder = ro;
