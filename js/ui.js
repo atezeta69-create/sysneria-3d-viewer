@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { DORSO_SOURCES } from './config.js';
 import { state, pilas, locks, layers, PanelStore } from './state.js';
 import { scene, camera, controls } from './scene.js';
-import { cargarModelo, limpiarTapete, cargarTapete, mostrarTapete } from './mesa.js';
+import { cargarModelo, limpiarTapete, cargarTapete, mostrarTapete, setOnModeloCargado } from './mesa.js';
 import { cargarBaraja, limpiarCartas, posicionarCartas, mostrarCartas,
   poblarDropdownDorsos, cargarTexturaDorso } from './cards.js';
 import { flipCard } from './face.js';
@@ -51,6 +51,13 @@ document.querySelectorAll('.lock-btn[data-lock]').forEach(btn => {
     btn.classList.toggle('locked', locks[layer]);
     btn.textContent = locks[layer] ? '🔒' : '🔓';
     PanelStore.set(layer === 'tapete' ? 'tapeteLocked' : 'cartasLocked', locks[layer]);
+    // FIX bypass del candado: si se bloquea la capa con algo de esa capa aún
+    // seleccionado, los botones de acción (voltear/girar/cuadrar/levantar)
+    // seguían operando sobre ello. Al bloquear, limpiar la selección.
+    if (locks[layer]) {
+      if (layer === 'cartas' && state.selectedCard) clearSelection();
+      if (layer === 'tapete' && state.selectedTapete) clearSelection();
+    }
   });
 });
 
@@ -299,3 +306,84 @@ document.querySelector('#zoomSlider').addEventListener('input', (e) => {
 document.querySelector('#zoomSlider').addEventListener('change', (e) => {
   PanelStore.set('zoom', parseFloat(e.target.value));
 });
+
+// ═══════════════════════════════════════════════
+//  RESTAURACIÓN COMPLETA DEL PANEL
+// ═══════════════════════════════════════════════
+// PanelStore.restore() (en state.js, sin imports por diseño) aplica lo que no
+// necesita otros módulos: modelo, zoom, colapsados, debug, deck, mode, faceUp.
+// Estas claves se guardaban pero NUNCA se aplicaban: tapeteColor, dorsoSource,
+// dorsoFile, tapeteLocked, cartasLocked, tapeteVisible, cartasVisible.
+// Se aplican aquí porque requieren mesa/cards/interaction. Ver CORRECCIONES.md.
+// Debe llamarse ANTES de PanelStore.restore(): fija state.currentTapete y el
+// hook de mesa antes de que restore() dispare el click del botón de mesa.
+function aplicarEstadoGuardado() {
+  PanelStore.load();
+
+  // ── Color de tapete: cargarModelo() hará cargarTapete(state.currentTapete) ──
+  const color = PanelStore.get('tapeteColor');
+  const colorBtn = document.querySelector(`.tapete-btn[data-tapete="${color}"]`);
+  if (colorBtn) {
+    state.currentTapete = color;
+    document.querySelectorAll('.tapete-btn[data-tapete]').forEach(b => b.classList.remove('active'));
+    colorBtn.classList.add('active');
+  }
+
+  // ── Dorso guardado (fuente + fichero, con validación) ──
+  const src = PanelStore.get('dorsoSource');
+  const file = PanelStore.get('dorsoFile');
+  if (DORSO_SOURCES[src]) {
+    const existe = DORSO_SOURCES[src].dorsos.some(d => d.file === file);
+    const fichero = existe ? file : DORSO_SOURCES[src].dorsos[0].file;
+    if (src !== state.currentDorsoSource || fichero !== state.currentDorsoFile) {
+      document.querySelectorAll('.source-btn[data-source]').forEach(b =>
+        b.classList.toggle('active', b.dataset.source === src));
+      poblarDropdownDorsos(src);
+      const dd = document.querySelector('#dorso-dropdown');
+      if (dd) dd.value = fichero;
+      cargarTexturaDorso(src, fichero);
+    }
+  }
+
+  // ── Candados ──
+  [['tapete', 'tapeteLocked'], ['cartas', 'cartasLocked']].forEach(([layer, key]) => {
+    const guardado = PanelStore.get(key);
+    if (typeof guardado === 'boolean' && guardado !== locks[layer]) {
+      locks[layer] = guardado;
+      const btn = document.querySelector(`.lock-btn[data-lock="${layer}"]`);
+      if (btn) {
+        btn.classList.toggle('locked', guardado);
+        btn.textContent = guardado ? '🔒' : '🔓';
+      }
+    }
+  });
+
+  // ── Visibilidades de tapete/cartas: diferidas a "mesa cargada" ──
+  // El click del botón de mesa (que dispara restore()) resetea estos toggles y
+  // la carga del GLB es asíncrona; aplicar antes posicionaría las cartas con
+  // un tableSurfaceY desfasado. El hook es de un solo uso.
+  setOnModeloCargado(() => {
+    if (PanelStore.get('tapeteVisible') === false) {
+      const row = document.querySelector('.toggle-row[data-layer="tapete"]');
+      if (row) {
+        row.classList.remove('active');
+        const sw = row.querySelector('.toggle-switch');
+        if (sw) sw.classList.remove('on');
+      }
+      const opts = document.querySelector('#tapete-options');
+      if (opts) opts.classList.remove('active');
+      setLayer('tapete', false);
+    }
+    if (PanelStore.get('cartasVisible') === true) {
+      const row = document.querySelector('.toggle-row[data-layer="cartas"]');
+      if (row) {
+        row.classList.add('active');
+        const sw = row.querySelector('.toggle-switch');
+        if (sw) sw.classList.add('on');
+      }
+      setLayer('cartas', true);
+    }
+  });
+}
+
+export { aplicarEstadoGuardado };

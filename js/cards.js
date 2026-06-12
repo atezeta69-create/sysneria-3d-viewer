@@ -32,6 +32,10 @@ function cargarTexturaDorso(sourceKey, file) {
   const source = DORSO_SOURCES[sourceKey];
   const url = `assets/cartas/dorsos/${source.dir}/${file}`;
   dorsoTextureLoader.load(url, (tex) => {
+    // Descartar respuestas obsoletas: si mientras cargaba se pidió otro dorso,
+    // esta textura ya no es la actual (dos load() en vuelo pueden llegar en
+    // cualquier orden). Ver CORRECCIONES.md.
+    if (state.currentDorsoSource !== sourceKey || state.currentDorsoFile !== file) return;
     state.dorsoTexture = tex;
     state.dorsoTexture.colorSpace = THREE.SRGBColorSpace;
     // Corregir espejado horizontal: la textura se ve al revés al rotar el plano

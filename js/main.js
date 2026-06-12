@@ -10,11 +10,14 @@ import './mesa.js';
 import './stacking.js';
 import './face.js';
 import './interaction.js';  // listeners de canvas/teclado
-import './ui.js';           // listeners del panel
+import { aplicarEstadoGuardado } from './ui.js';  // listeners del panel + restauración
 import './tests.js';        // botones de tests
 import { updateCursorFrame } from './cursor.js';
 
-// Restaurar configuración guardada (mesa, zoom, colapsado, debug, etc.)
+// Restaurar configuración guardada — en dos fases (ver CORRECCIONES.md):
+// 1) claves que necesitan módulos (tapete, dorso, candados, visibilidades)
+aplicarEstadoGuardado();
+// 2) resto (mesa, zoom, colapsado, debug, deck, modo, faceUp) — dispara la carga
 PanelStore.restore();
 
 function animate() {

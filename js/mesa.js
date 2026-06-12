@@ -7,6 +7,13 @@ import { limpiarCartas } from './cards.js';
 
 const loader = new GLTFLoader();
 
+// Hook de un solo uso: se ejecuta cuando termina de cargar la mesa.
+// Lo usa la restauración del panel para aplicar visibilidades guardadas
+// (tapete/cartas), que dependen de tableSurfaceY y del reset que hace
+// el click del botón de mesa. Ver CORRECCIONES.md.
+let onModeloCargado = null;
+function setOnModeloCargado(fn) { onModeloCargado = fn; }
+
 // ═══════════════════════════════════════════════
 //  CARGA DE MODELOS (mesas)
 // ═══════════════════════════════════════════════
@@ -45,6 +52,8 @@ function cargarModelo(url) {
     // Auto-cargar tapete (activo por defecto)
     layers.tapete.visible = true;
     cargarTapete(state.currentTapete);
+    // Restauración diferida (un solo uso)
+    if (onModeloCargado) { const f = onModeloCargado; onModeloCargado = null; f(); }
   }, (xhr) => {
     const p = Math.round((xhr.loaded / xhr.total) * 100);
     if (p < 100) document.querySelector('#status').innerHTML = `<span class=loading>●</span> ${p}%`;
@@ -109,4 +118,4 @@ function mostrarTapete(show) {
   layers.tapete.visible = show;
 }
 
-export { cargarModelo, limpiarTapete, cargarTapete, mostrarTapete };
+export { cargarModelo, limpiarTapete, cargarTapete, mostrarTapete, setOnModeloCargado };

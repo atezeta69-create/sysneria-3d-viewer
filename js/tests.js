@@ -86,7 +86,7 @@ const SysneriaTests = (() => {
 
     describe('Constantes', () => {
       it('CARD_SCALE es 0.8', () => expect(CARD_SCALE).toBe(0.8));
-      it('CARD_LIFT es 0.015', () => expect(CARD_LIFT).toBe(0.015));
+      it('CARD_LIFT es 0.025', () => expect(CARD_LIFT).toBe(0.025));
       it('TAPETE_THICKNESS es 0.003', () => expect(TAPETE_THICKNESS).toBe(0.003));
       it('CARD_OFFSET > 0', () => expect(CARD_OFFSET).toBeGreaterThan(0));
       it('tableSurfaceY > 0', () => expect(state.tableSurfaceY).toBeGreaterThan(0));
